@@ -500,7 +500,23 @@ const A={
  exam:d=>{const x=db.exams.find(e=>e.id===d.i)||{type:'Экзамен',subj:'',date:'',time:'',teacher:'',room:''};sh={e:x.id||''};openSheet(`<h3>${x.id?'Экзамен/зачёт':'Новый экзамен'}</h3><label>Тип</label><select id="et">${['Экзамен','Зачёт','Диф. зачёт','Контрольная'].map(t=>`<option value="${t}" ${t===x.type?'selected':''}>${t}</option>`).join('')}</select><label>Предмет</label><input id="es" value="${esc(x.subj)}"><label>Дата</label><input type="date" id="ed" value="${x.date}"><label>Время</label><input type="time" id="eti" value="${x.time||''}"><label>Аудитория</label><input id="er" value="${esc(x.room)}"><label>Преподаватель</label><select id="et2"><option value="">—</option>${db.teachers.map(t=>`<option value="${t.id}" ${t.id===x.teacher?'selected':''}>${esc(t.name)}</option>`).join('')}</select><div class="acts"><button class="pr" data-a="esave">Сохранить</button>${x.id?'<button class="dg" data-a="edel">Удалить</button>':''}</div>`)},
  esave:()=>{const o={type:$('#et').value,subj:val('es'),date:$('#ed').value,time:$('#eti').value,room:val('er'),teacher:$('#et2').value};if(!o.subj||!o.date)return toast('Нужны предмет и дата');const x=db.exams.find(e=>e.id===sh.e);x?Object.assign(x,o):db.exams.push({id:uid(),...o});save();shut()},
  edel:()=>{if(confirm('Удалить экзамен?')){db.exams=db.exams.filter(e=>e.id!==sh.e);save();shut()}},
- sblogin:async()=>{try{await login(val('sbe'),val('sbp'));toast('Вход выполнен');await sync();render()}catch(e){toast(e.message)}},
+ sblogin:async()=>{
+  try{
+    await login(val('sbe'),val('sbp'));
+    toast('Вход выполнен');
+    
+    // Очищаем локальную базу перед загрузкой с сервера
+    db={students:[],teachers:[],lessons:[],att:{},notes:{},hw:[],exams:[],ref:'2026-08-31'};
+    syn={m:{},last:''};
+    localStorage.removeItem(KEY);
+    localStorage.removeItem('starosta.syn');
+    
+    await sync();
+    render();
+  }catch(e){
+    toast(e.message)
+  }
+},
  sblogout:()=>{ses=null;localStorage.removeItem('starosta.sb');render()},
  syncnow:async()=>{await sync();render();toast(stat)},
  bkshow:()=>{$('#bk').value=JSON.stringify(db)},

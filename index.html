@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#2b4bb8">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>ЦТМ</title>
+<title>пифы</title>
 <style>
 :root{--bg:#eef2f7;--card:#fff;--tx:#141a2b;--mut:#6b7488;--ac:#2b4bb8;--onac:#fff;--ln:#dde3ee;--ok:#2e8b57;--bad:#d23b3b;--warn:#c98a10;--in:#e9eef7}
 @media(prefers-color-scheme:dark){:root{--bg:#0e1320;--card:#171e30;--tx:#eef1fa;--mut:#8f9ab3;--ac:#8fa8ff;--onac:#0e1320;--ln:#26304a;--in:#212a42;--ok:#4cc58a;--bad:#ff6b6b;--warn:#e8b04a}}
@@ -57,6 +57,22 @@ textarea{min-height:90px;resize:vertical}
 a{color:var(--ac)}
 .ck{display:flex;align-items:center;gap:10px;font-size:16px;color:var(--tx);margin:8px 0}
 .ck input{width:22px;height:22px;margin:0}
+/* 📊 Стили для аналитики */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.stat-box{background:var(--in);border-radius:10px;padding:10px;text-align:center}
+.stat-box .num{font:700 22px/1 -apple-system,sans-serif}
+.stat-box .lbl{font-size:11px;color:var(--mut);margin-top:2px}
+.stat-box.ok{background:var(--ok);color:#fff}.stat-box.ok .lbl{color:rgba(255,255,255,.85)}
+.stat-box.bad{background:var(--bad);color:#fff}.stat-box.bad .lbl{color:rgba(255,255,255,.85)}
+.stat-box.warn{background:var(--warn);color:#fff}.stat-box.warn .lbl{color:rgba(255,255,255,.85)}
+.bar{height:8px;background:var(--in);border-radius:99px;overflow:hidden;margin:6px 0}
+.bar-fill{height:100%;border-radius:99px;transition:width .3s}
+.bar-fill.ok{background:var(--ok)}.bar-fill.bad{background:var(--bad)}.bar-fill.warn{background:var(--warn)}
+.stat-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+.stat-row .lbl{color:var(--mut)}
+.stat-row .val{font-weight:600;font-variant-numeric:tabular-nums}
+.percent-big{font:700 32px/1 -apple-system,sans-serif;text-align:center;margin:8px 0}
+.percent-big.ok{color:var(--ok)}.percent-big.bad{color:var(--bad)}.percent-big.warn{color:var(--warn)}
 </style>
 </head>
 <body>
@@ -82,9 +98,58 @@ const parity=d=>((Math.round((monday(d)-monday(pd(db.ref)))/6048e5)%2)+2)%2===0?
 const lessonsFor=d=>{const w=parity(d);return db.lessons.filter(l=>l.day===dow(d)&&(!l.wk||l.wk===w)).sort((a,b)=>a.start.localeCompare(b.start))};
 const tname=id=>(db.teachers.find(t=>t.id===id)||{}).name||'';
 const val=id=>$('#'+id).value.trim();
+
+// 📊 АНАЛИТИКА ПОСЕЩАЕМОСТИ
+// Подсчёт статистики для одного студента
+function studentAttStats(sid){
+  let total=0,p=0,a=0,e=0,l=0;
+  for(const k in db.att){
+    const marks=db.att[k];
+    if(marks[sid]){
+      total++;
+      if(marks[sid]==='p')p++;
+      else if(marks[sid]==='a')a++;
+      else if(marks[sid]==='e')e++;
+      else if(marks[sid]==='l')l++;
+    }
+  }
+  const pct=total?Math.round(p/total*100):0;
+  return {total,p,a,e,l,pct};
+}
+// Общая статистика по группе
+function groupAttStats(){
+  let total=0,p=0,a=0,e=0,l=0;
+  for(const k in db.att){
+    const marks=db.att[k];
+    for(const sid in marks){
+      total++;
+      if(marks[sid]==='p')p++;
+      else if(marks[sid]==='a')a++;
+      else if(marks[sid]==='e')e++;
+      else if(marks[sid]==='l')l++;
+    }
+  }
+  const pct=total?Math.round(p/total*100):0;
+  return {total,p,a,e,l,pct};
+}
+// Отрисовка блока статистики
+function statsBlock(s,title){
+  return `<div class="card"><h3 style="margin:0 0 8px">${title}</h3>
+  <div class="percent-big ${s.pct>=80?'ok':s.pct>=60?'warn':'bad'}">${s.pct}%</div>
+  <div class="bar"><div class="bar-fill ok" style="width:${s.pct}%"></div></div>
+  <div class="stats-grid">
+    <div class="stat-box ok"><div class="num">${s.p}</div><div class="lbl">Присутствий</div></div>
+    <div class="stat-box bad"><div class="num">${s.a}</div><div class="lbl">Пропусков</div></div>
+    <div class="stat-box warn"><div class="num">${s.e}</div><div class="lbl">Уважительных</div></div>
+    <div class="stat-box warn"><div class="num">${s.l}</div><div class="lbl">Опозданий</div></div>
+  </div>
+  <div class="stat-row"><span class="lbl">Всего отметок</span><span class="val">${s.total}</span></div>
+  </div>`;
+}
+
 const absCount=()=>{const c={};for(const k in db.att)for(const s in db.att[k])if(db.att[k][s]==='a')c[s]=(c[s]||0)+1;return c};
 
-
+//  НАСТРОЙКИ SUPABASE
 const SB={
   url:'https://jvnrfunimsbhoatbhoai.supabase.co', 
   key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2bnJmdW5pbXNiaG9hdGJob2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3MDQ5ODksImV4cCI6MjEwNjI4MDk4OX0.xwiQVKIz1k5MdjywyFjhe8g0aGjatYqtYAok1f9I-qo'
@@ -194,7 +259,7 @@ async function sync(){
 
 const syncCard=()=>`<h2>☁️ Общий доступ</h2><div class="card">${ses?`<small>✅ Вход выполнен. ${esc(stat)}</small><div class="acts"><button class="pr" data-a="syncnow">Синхронизировать</button><button class="dg" data-a="sblogout">Выйти</button></div>`:`<label>Почта</label><input id="sbe" type="email" autocomplete="username"><label>Пароль</label><input id="sbp" type="password" autocomplete="current-password"><button class="pr" data-a="sblogin" style="width:100%">Войти</button>`}</div>`;
 
-const COLS=[['fl','Дата флюры'],['hg','Группа здоровья'],['zk','Номер зачётки'],['phone','Телефон'],['mail','Почта']];
+const COLS=[['fl','Дата флюры'],['dob','Дата рождения'],['hg','Группа здоровья'],['zk','Номер зачётки'],['phone','Телефон'],['mail','Почта']];
 let cols=['fl'];
 const fdate=s=>s?s.split('-').reverse().join('.'):'';
 const flOld=s=>s.fl&&Date.now()-pd(s.fl)>365*864e5;
@@ -253,9 +318,37 @@ function vHw(){
  return h}
 
 function vGroup(){
- const c=absCount();
- let h=`<h2>Студенты (${db.students.length}) <button class="pr" data-a="se">+ Добавить</button></h2><div class="card">`;
- h+=db.students.length?db.students.map((s,i)=>`<div class="row srow" data-a="sp" data-i="${s.id}"><span class="fl">${i+1}. ${esc(s.name)}${s.fl?`<br><small ${flOld(s)?'style="color:var(--bad)"':''}>флюра: ${fdate(s.fl)}${flOld(s)?' · больше года':''}</small>`:''}</span><small>н/б: ${c[s.id]||0} ›</small></div>`).join(''):'<div class="empty">Добавь студентов списком, по одному на строку</div>';
+ // 📊 Общая статистика группы
+ const gs=groupAttStats();
+ let h='<h2>📊 Посещаемость группы</h2>';
+ if(gs.total>0){
+   h+=statsBlock(gs,'Общая по группе');
+ } else {
+   h+='<div class="card"><small>Пока нет отметок о посещаемости. Отмечай студентов на парах — здесь появится статистика.</small></div>';
+ }
+ 
+ // Список студентов с индивидуальной статистикой
+ // Сортируем: сначала худшая посещаемость, потом по алфавиту
+ const studentsWithStats=db.students.map(s=>({s,stats:studentAttStats(s.id)}))
+   .sort((a,b)=>{
+     if(a.stats.total===0&&b.stats.total===0) return a.s.name.localeCompare(b.s.name,'ru');
+     if(a.stats.total===0) return 1;
+     if(b.stats.total===0) return -1;
+     return a.stats.pct-b.stats.pct||a.s.name.localeCompare(b.s.name,'ru');
+   });
+ 
+ h+=`<h2>👥 Студенты (${db.students.length}) <button class="pr" data-a="se">+ Добавить</button></h2><div class="card">`;
+ h+=studentsWithStats.length?studentsWithStats.map(({s,stats},i)=>{
+   const pctDisplay=stats.total?`${stats.pct}%`:'—';
+   const barColor=stats.total?(stats.pct>=80?'ok':stats.pct>=60?'warn':'bad'):'';
+   return `<div class="row srow" data-a="sp" data-i="${s.id}">
+     <span class="fl">${i+1}. ${esc(s.name)}${s.fl?`<br><small ${flOld(s)?'style="color:var(--bad)"':''}>флюра: ${fdate(s.fl)}${flOld(s)?' · больше года':''}</small>`:''}
+     ${stats.total?`<div class="bar" style="margin-top:4px"><div class="bar-fill ${barColor}" style="width:${stats.pct}%"></div></div>
+     <small>посещ. ${pctDisplay} · н/б: ${stats.a}</small>`:''}
+     </span>
+     <span class="pill ${stats.total?(stats.pct>=80?'ok':stats.pct>=60?'warn':'bad'):''}">${pctDisplay}</span>
+   </div>`;
+ }).join(''):'<div class="empty">Добавь студентов списком, по одному на строку</div>';
  h+='</div>'+expCard()+'<h2>Преподаватели <button class="pr" data-a="te" data-i="">+ Препод</button></h2>';
  h+=db.teachers.map(t=>`<div class="card"><div class="row" data-a="te" data-i="${t.id}"><div class="fl"><b>${esc(t.name)}</b><div class="mut">${esc(t.subj)}</div></div></div><div class="acts">${t.phone?`<a href="tel:${esc(t.phone)}">${esc(t.phone)}</a>`:''}${t.tg?`<a href="https://t.me/${esc(t.tg.replace('@',''))}">@${esc(t.tg.replace('@',''))}</a>`:''}${t.mail?`<a href="mailto:${esc(t.mail)}">${esc(t.mail)}</a>`:''}</div></div>`).join('');
  return h}
@@ -285,8 +378,15 @@ const A={
  ldel:()=>{if(confirm('Удалить пару?')){db.lessons=db.lessons.filter(x=>x.id!==sh.l);save();shut()}},
  se:()=>openSheet(`<h3>Добавить студентов</h3><small>По одному на строку</small><textarea id="sn" style="min-height:200px"></textarea><button class="pr" data-a="ssave" style="width:100%">Добавить</button>`),
  ssave:()=>{$('#sn').value.split('\n').map(s=>s.trim()).filter(Boolean).forEach(n=>db.students.push({id:uid(),name:n}));save();shut()},
- sp:d=>{const s=db.students.find(x=>x.id===d.i);sh={s:s.id};openSheet(`<h3>Профиль</h3><label>ФИО</label><input id="pnm" value="${esc(s.name)}"><label>Дата последней флюры</label><input type="date" id="pfl" value="${s.fl||''}"><label>Группа здоровья</label><input id="phg" placeholder="напр. I, II или основная" value="${esc(s.hg)}"><label>Номер зачётки</label><input id="pzk" inputmode="numeric" value="${esc(s.zk)}"><label>Телефон</label><input id="pph" type="tel" value="${esc(s.phone)}"><label>Почта</label><input id="pml" type="email" value="${esc(s.mail)}"><div class="acts"><button class="pr" data-a="spsave">Сохранить</button><button class="dg" data-a="spdel">Удалить</button></div>`)},
- spsave:()=>{const s=db.students.find(x=>x.id===sh.s),n=val('pnm');if(!n)return toast('Нужно ФИО');Object.assign(s,{name:n,fl:$('#pfl').value,hg:val('phg'),zk:val('pzk'),phone:val('pph'),mail:val('pml')});save();shut()},
+ sp:d=>{
+   const s=db.students.find(x=>x.id===d.i);
+   sh={s:s.id};
+   const stats=studentAttStats(s.id);
+   //  Блок статистики в карточке студента
+   const statsHtml=stats.total?`<h3 style="margin-top:16px">📊 Посещаемость</h3>${statsBlock(stats,s.name)}`:'';
+   openSheet(`<h3>Профиль</h3><label>ФИО</label><input id="pnm" value="${esc(s.name)}"><label>Дата последней флюры</label><input type="date" id="pfl" value="${s.fl||''}"><label>Дата рождения</label><input type="date" id="pdob" value="${s.dob||''}"><label>Группа здоровья</label><input id="phg" placeholder="напр. I, II или основная" value="${esc(s.hg)}"><label>Номер зачётки</label><input id="pzk" inputmode="numeric" value="${esc(s.zk)}"><label>Телефон</label><input id="pph" type="tel" value="${esc(s.phone)}"><label>Почта</label><input id="pml" type="email" value="${esc(s.mail)}">${statsHtml}<div class="acts"><button class="pr" data-a="spsave">Сохранить</button><button class="dg" data-a="spdel">Удалить</button></div>`);
+ },
+ spsave:()=>{const s=db.students.find(x=>x.id===sh.s),n=val('pnm');if(!n)return toast('Нужно ФИО');Object.assign(s,{name:n,fl:$('#pfl').value,dob:$('#pdob').value,hg:val('phg'),zk:val('pzk'),phone:val('pph'),mail:val('pml')});save();shut()},
  spdel:()=>{const s=db.students.find(x=>x.id===sh.s);if(confirm('Удалить «'+s.name+'»?')){db.students=db.students.filter(x=>x!==s);save();shut()}},
  exp:async()=>{if(!db.students.length)return toast('Список пуст');const f=new File(['\ufeff'+csv()],'spisok.csv',{type:'text/csv'});try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(e){if(e.name==='AbortError')return}const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download='spisok.csv';document.body.appendChild(a);a.click();a.remove()},
  expc:async()=>{try{await navigator.clipboard.writeText(rows().map(r=>r.join('\t')).join('\n'));toast('Скопировано, вставляй в Excel или Таблицы')}catch(e){toast('Не удалось скопировать')}},

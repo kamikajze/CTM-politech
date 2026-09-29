@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#2b4bb8">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>Староста</title>
+<title>ЦТМ</title>
 <style>
 :root{--bg:#eef2f7;--card:#fff;--tx:#141a2b;--mut:#6b7488;--ac:#2b4bb8;--onac:#fff;--ln:#dde3ee;--ok:#2e8b57;--bad:#d23b3b;--warn:#c98a10;--in:#e9eef7}
 @media(prefers-color-scheme:dark){:root{--bg:#0e1320;--card:#171e30;--tx:#eef1fa;--mut:#8f9ab3;--ac:#8fa8ff;--onac:#0e1320;--ln:#26304a;--in:#212a42;--ok:#4cc58a;--bad:#ff6b6b;--warn:#e8b04a}}
@@ -83,51 +83,125 @@ const lessonsFor=d=>{const w=parity(d);return db.lessons.filter(l=>l.day===dow(d
 const tname=id=>(db.teachers.find(t=>t.id===id)||{}).name||'';
 const val=id=>$('#'+id).value.trim();
 const absCount=()=>{const c={};for(const k in db.att)for(const s in db.att[k])if(db.att[k][s]==='a')c[s]=(c[s]||0)+1;return c};
-const SB={url:'',key:''};
+
+
+const SB={
+  url:'https://jvnrfunimsbhoatbhoai.supabase.co', 
+  key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2bnJmdW5pbXNiaG9hdGJob2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3MDQ5ODksImV4cCI6MjEwNjI4MDk4OX0.xwiQVKIz1k5MdjywyFjhe8g0aGjatYqtYAok1f9I-qo'
+};
+
 let ses=null,syn={m:{},last:''},stat='',busy=false,again=false,tm;
 try{ses=JSON.parse(localStorage.getItem('starosta.sb'))}catch(e){}
 try{syn=Object.assign(syn,JSON.parse(localStorage.getItem('starosta.syn')))}catch(e){}
 const H=t=>({apikey:SB.key,...(t?{Authorization:'Bearer '+t}:{}),'Content-Type':'application/json'});
 const setSes=j=>{ses={a:j.access_token,r:j.refresh_token,e:Date.now()+(j.expires_in-60)*1e3};localStorage.setItem('starosta.sb',JSON.stringify(ses))};
-async function login(email,password){const r=await fetch(SB.url+'/auth/v1/token?grant_type=password',{method:'POST',headers:H(),body:JSON.stringify({email,password})}),j=await r.json();if(!r.ok)throw new Error(j.error_description||j.msg||'Не удалось войти');setSes(j)}
-async function token(){if(!ses)throw new Error('нужен вход');if(Date.now()>ses.e){const r=await fetch(SB.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:H(),body:JSON.stringify({refresh_token:ses.r})}),j=await r.json();if(!r.ok){ses=null;localStorage.removeItem('starosta.sb');throw new Error('нужно войти заново')}setSes(j)}return ses.a}
-function rowsOf(){const r={};
- db.students.forEach(x=>r['student:'+x.id]=x);db.teachers.forEach(x=>r['teacher:'+x.id]=x);db.lessons.forEach(x=>r['lesson:'+x.id]=x);db.hw.forEach(x=>r['hw:'+x.id]=x);
- for(const k in db.att)for(const s in db.att[k])r['att:'+k+':'+s]={k,s,v:db.att[k][s]};
- for(const k in db.notes)r['note:'+k]={k,t:db.notes[k]};
- r['cfg:ref']={ref:db.ref};return r}
-function applyRow(id,d,del){const i=id.indexOf(':'),kind=id.slice(0,i),rest=id.slice(i+1),L={student:'students',teacher:'teachers',lesson:'lessons',hw:'hw'}[kind];
- if(L){db[L]=db[L].filter(x=>x.id!==rest);if(!del&&d)db[L].push(d)}
- else if(kind==='att'){const[k,s]=rest.split(':');if(del||!d){if(db.att[k]){delete db.att[k][s];if(!Object.keys(db.att[k]).length)delete db.att[k]}}else(db.att[k]=db.att[k]||{})[s]=d.v}
- else if(kind==='note'){if(del||!d)delete db.notes[rest];else db.notes[rest]=d.t}
- else if(kind==='cfg'&&d&&d.ref)db.ref=d.ref}
+
+async function login(email,password){
+  const r=await fetch(SB.url+'/auth/v1/token?grant_type=password',{method:'POST',headers:H(),body:JSON.stringify({email,password})});
+  const j=await r.json();
+  if(!r.ok) throw new Error(j.error_description||j.msg||'Не удалось войти');
+  setSes(j);
+}
+
+async function token(){
+  if(!ses) throw new Error('нужен вход');
+  if(Date.now()>ses.e){
+    const r=await fetch(SB.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:H(),body:JSON.stringify({refresh_token:ses.r})});
+    const j=await r.json();
+    if(!r.ok){ses=null;localStorage.removeItem('starosta.sb');throw new Error('нужно войти заново')}
+    setSes(j);
+  }
+  return ses.a;
+}
+
+function rowsOf(){
+  const r={};
+  db.students.forEach(x=>r['student:'+x.id]=x);
+  db.teachers.forEach(x=>r['teacher:'+x.id]=x);
+  db.lessons.forEach(x=>r['lesson:'+x.id]=x);
+  db.hw.forEach(x=>r['hw:'+x.id]=x);
+  for(const k in db.att)for(const s in db.att[k])r['att:'+k+':'+s]={k,s,v:db.att[k][s]};
+  for(const k in db.notes)r['note:'+k]={k,t:db.notes[k]};
+  r['cfg:ref']={ref:db.ref};
+  return r;
+}
+
+function applyRow(id,d,del){
+  const i=id.indexOf(':'),kind=id.slice(0,i),rest=id.slice(i+1),L={student:'students',teacher:'teachers',lesson:'lessons',hw:'hw'}[kind];
+  if(L){db[L]=db[L].filter(x=>x.id!==rest);if(!del&&d)db[L].push(d)}
+  else if(kind==='att'){const[k,s]=rest.split(':');if(del||!d){if(db.att[k]){delete db.att[k][s];if(!Object.keys(db.att[k]).length)delete db.att[k]}}else(db.att[k]=db.att[k]||{})[s]=d.v}
+  else if(kind==='note'){if(del||!d)delete db.notes[rest];else db.notes[rest]=d.t}
+  else if(kind==='cfg'&&d&&d.ref)db.ref=d.ref;
+}
+
 function queue(){if(SB.url&&ses){clearTimeout(tm);tm=setTimeout(sync,900)}}
+
 async function sync(){
- if(!SB.url||!ses)return;if(busy){again=true;return}busy=true;
- try{
-  const t=await token();
-  if(!syn.last){const p=await fetch(SB.url+'/rest/v1/items?select=id&limit=1',{headers:H(t)});if(p.ok&&(await p.json()).length){Object.assign(db,{students:[],teachers:[],lessons:[],hw:[],att:{},notes:{}});syn.m={'cfg:ref':JSON.stringify(rowsOf()['cfg:ref'])}}}
-  const cur=rowsOf(),m={},up=[];
-  for(const id in cur){const j=JSON.stringify(cur[id]);m[id]=j;if(syn.m[id]!==j)up.push({id,kind:id.split(':')[0],data:cur[id],deleted:false})}
-  for(const id in syn.m)if(!(id in cur))up.push({id,kind:id.split(':')[0],data:null,deleted:true});
-  if(up.length){const r=await fetch(SB.url+'/rest/v1/items?on_conflict=id',{method:'POST',headers:{...H(t),Prefer:'resolution=merge-duplicates'},body:JSON.stringify(up)});if(!r.ok)throw new Error(await r.text())}
-  syn.m=m;
-  const since=syn.last?'&updated_at=gte.'+encodeURIComponent(new Date(Date.parse(syn.last)-5e3).toISOString()):'';
-  let rows=[],o=0;for(;;){const r=await fetch(SB.url+'/rest/v1/items?select=*&order=updated_at.asc,id.asc'+since+'&limit=1000&offset='+o,{headers:H(t)});if(!r.ok)throw new Error(await r.text());const p=await r.json();rows=rows.concat(p);if(p.length<1000)break;o+=1000}
-  if(rows.length){rows.forEach(x=>applyRow(x.id,x.data,x.deleted));const now=rowsOf();rows.forEach(x=>{if(x.id in now)syn.m[x.id]=JSON.stringify(now[x.id]);else delete syn.m[x.id]});syn.last=rows[rows.length-1].updated_at;localStorage.setItem(KEY,JSON.stringify(db))}
-  localStorage.setItem('starosta.syn',JSON.stringify(syn));
-  stat='обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  if(rows.length&&!$('#sheet').classList.contains('on'))render();
- }catch(e){stat='ошибка: '+String(e.message).slice(0,90)}
- finally{busy=false;if(again){again=false;sync()}}}
-const syncCard=()=>`<h2>Общий доступ</h2><div class="card">${ses?`<small>Вход выполнен. ${esc(stat)}</small><div class="acts"><button class="pr" data-a="syncnow">Синхронизировать</button><button class="dg" data-a="sblogout">Выйти</button></div>`:`<label>Почта</label><input id="sbe" type="email" autocomplete="username"><label>Пароль</label><input id="sbp" type="password" autocomplete="current-password"><button class="pr" data-a="sblogin" style="width:100%">Войти</button>`}</div>`;
+  if(!SB.url||!ses) return;
+  if(busy){ again=true; return; }
+  busy=true;
+  try{
+    const t=await token();
+    const cur=rowsOf(), m={}, up=[];
+    for(const id in cur){
+      const j=JSON.stringify(cur[id]);
+      m[id]=j;
+      if(syn.m[id]!==j) up.push({id, kind:id.split(':')[0], data:cur[id], deleted:false});
+    }
+    for(const id in syn.m){
+      if(!(id in cur)) up.push({id, kind:id.split(':')[0], data:null, deleted:true});
+    }
+    if(up.length){
+      const r=await fetch(SB.url+'/rest/v1/items?on_conflict=id', {
+        method:'POST',
+        headers:{...H(t), Prefer:'resolution=merge-duplicates'},
+        body:JSON.stringify(up)
+      });
+      if(!r.ok) throw new Error(await r.text());
+    }
+    const since = syn.last ? `&updated_at=gt.${encodeURIComponent(syn.last)}` : '';
+    let rows=[], o=0;
+    for(;;){
+      const r=await fetch(SB.url+`/rest/v1/items?select=*&order=updated_at.asc,id.asc${since}&limit=1000&offset=${o}`, {headers:H(t)});
+      if(!r.ok) throw new Error(await r.text());
+      const p=await r.json();
+      rows=rows.concat(p);
+      if(p.length<1000) break;
+      o+=1000;
+    }
+    if(rows.length){
+      rows.forEach(x=>applyRow(x.id, x.data, x.deleted));
+      const now=rowsOf();
+      rows.forEach(x=>{
+        if(x.id in now) syn.m[x.id]=JSON.stringify(now[x.id]);
+        else delete syn.m[x.id];
+      });
+      syn.last=rows[rows.length-1].updated_at;
+      localStorage.setItem(KEY, JSON.stringify(db));
+    }
+    syn.m=m;
+    localStorage.setItem('starosta.syn', JSON.stringify(syn));
+    stat='обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    if(rows.length && !$('#sheet').classList.contains('on')) render();
+  } catch(e){
+    stat='ошибка: '+String(e.message).slice(0,90);
+    console.error('Sync error:', e);
+  } finally {
+    busy=false;
+    if(again){ again=false; sync(); }
+  }
+}
+
+const syncCard=()=>`<h2>☁️ Общий доступ</h2><div class="card">${ses?`<small>✅ Вход выполнен. ${esc(stat)}</small><div class="acts"><button class="pr" data-a="syncnow">Синхронизировать</button><button class="dg" data-a="sblogout">Выйти</button></div>`:`<label>Почта</label><input id="sbe" type="email" autocomplete="username"><label>Пароль</label><input id="sbp" type="password" autocomplete="current-password"><button class="pr" data-a="sblogin" style="width:100%">Войти</button>`}</div>`;
+
 const COLS=[['fl','Дата флюры'],['hg','Группа здоровья'],['zk','Номер зачётки'],['phone','Телефон'],['mail','Почта']];
 let cols=['fl'];
 const fdate=s=>s?s.split('-').reverse().join('.'):'';
 const flOld=s=>s.fl&&Date.now()-pd(s.fl)>365*864e5;
 const rows=()=>[['ФИО',...cols.map(k=>COLS.find(c=>c[0]===k)[1])],...db.students.map(s=>[s.name,...cols.map(k=>k==='fl'?fdate(s.fl):s[k]||'')])];
 const csv=()=>rows().map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
-const expCard=()=>`<h2>Выгрузка списка</h2><div class="card"><small>ФИО будет всегда. Отметь остальные столбцы:</small><div id="cols">${COLS.map(([k,n])=>`<label class="ck"><input type="checkbox" value="${k}" ${cols.includes(k)?'checked':''}>${n}</label>`).join('')}</div><div class="acts"><button class="pr" data-a="exp">Скачать CSV</button><button data-a="expc">Копировать</button></div></div>`;
+const expCard=()=>`<h2>📥 Выгрузка списка</h2><div class="card"><small>ФИО будет всегда. Отметь остальные столбцы:</small><div id="cols">${COLS.map(([k,n])=>`<label class="ck"><input type="checkbox" value="${k}" ${cols.includes(k)?'checked':''}>${n}</label>`).join('')}</div><div class="acts"><button class="pr" data-a="exp">Скачать CSV</button><button data-a="expc">Копировать</button></div></div>`;
+
 if(!db.seeded){
  if(!db.lessons.length&&!db.teachers.length){
   const T=[['Иванова М.В.','асс. · Цифровые платформы'],['Бельмас С.М.','ст. пр. · Бизнес-архитектуры, ФЯП, Big Data'],['Ахметова М.И.','доц. · Финансовое моделирование'],['Широков А.А.','доц. · ОС, сети и телекоммуникации'],['Леонтьева С.М.','ст. пр. · Бухгалтерский и управленческий учёт']].map(([name,subj])=>({id:uid(),name,subj,phone:'',tg:'',mail:''}));
@@ -143,6 +217,7 @@ if(!db.seeded){
  }
  db.seeded=1;save();
 }
+
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1800)}
 function openSheet(h){$('#pn').innerHTML=h;$('#sheet').classList.add('on')}
 function shut(){$('#sheet').classList.remove('on');render()}

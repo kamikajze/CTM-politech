@@ -308,10 +308,98 @@ const H=t=>({apikey:SB.key,...(t?{Authorization:'Bearer '+t}:{}),'Content-Type':
 const setSes=j=>{ses={a:j.access_token,r:j.refresh_token,e:Date.now()+(j.expires_in-60)*1e3};localStorage.setItem('starosta.sb',JSON.stringify(ses))};
 async function login(email,password){const r=await fetch(SB.url+'/auth/v1/token?grant_type=password',{method:'POST',headers:H(),body:JSON.stringify({email,password})}),j=await r.json();if(!r.ok)throw new Error(j.error_description||j.msg||'Не удалось войти');setSes(j)}
 async function token(){if(!ses)throw new Error('нужен вход');if(Date.now()>ses.e){const r=await fetch(SB.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:H(),body:JSON.stringify({refresh_token:ses.r})}),j=await r.json();if(!r.ok){ses=null;localStorage.removeItem('starosta.sb');throw new Error('нужно войти заново')}setSes(j)}return ses.a}
+
 function rowsOf(){const r={};db.students.forEach(x=>r['student:'+x.id]=x);db.teachers.forEach(x=>r['teacher:'+x.id]=x);db.lessons.forEach(x=>r['lesson:'+x.id]=x);db.hw.forEach(x=>r['hw:'+x.id]=x);db.exams.forEach(x=>r['exam:'+x.id]=x);for(const k in db.att)for(const s in db.att[k])r['att:'+k+':'+s]={k,s,v:db.att[k][s]};for(const k in db.notes)r['note:'+k]={k,t:db.notes[k]};r['cfg:ref']={ref:db.ref};return r}
-function applyRow(id,d,del){const i=id.indexOf(':'),kind=id.slice(0,i),rest=id.slice(i+1),L={student:'students',teacher:'teachers',lesson:'lessons',hw:'hw',exam:'exams'}[kind];if(L){db[L]=db[L].filter(x=>x.id!==rest);if(!del&&d)db[L].push(d)}else if(kind==='att'){const[k,s]=rest.split(':');if(del||!d){if(db.att[k]){delete db.att[k][s];if(!Object.keys(db.att[k]).length)delete db.att[k]}}else(db.att[k]=db.att[k]||{})[s]=d.v}else if(kind==='note'){if(del||!d)delete db.notes[rest];else db.notes[rest]=d.t}else if(kind==='cfg'&&d&&d.ref)db.ref=d.ref}
+
+// НОВАЯ ФУНКЦИЯ: применяет серверные данные БЕЗ создания дублей
+// Сначала группирует по id (берёт последнюю версию), потом ПОЛНОСТЬЮ заменяет локальные данные
+function applyServerData(rows){
+  // 1. Группируем по id, оставляем только последнюю версию каждой записи
+  const byId={};
+  rows.forEach(x=>{
+    if(!byId[x.id]||new Date(x.updated_at)>new Date(byId[x.id].updated_at)){
+      byId[x.id]=x;
+    }
+  });
+  
+  // 2. Полностью очищаем локальные данные
+  db={students:[],teachers:[],lessons:[],att:{},notes:{},hw:[],exams:[],ref:db.ref};
+  
+  // 3. Заполняем из серверных данных
+  for(const id in byId){
+    const x=byId[id];
+    if(x.deleted)continue;
+    const i=id.indexOf(':'),kind=id.slice(0,i),rest=id.slice(i+1);
+    const L={student:'students',teacher:'teachers',lesson:'lessons',hw:'hw',exam:'exams'}[kind];
+    if(L){
+      db[L].push(x.data);
+    } else if(kind==='att'){
+      const[k,s]=rest.split(':');
+      (db.att[k]=db.att[k]||{})[s]=x.data.v;
+    } else if(kind==='note'){
+      db.notes[rest]=x.data.t;
+    } else if(kind==='cfg'&&x.data.ref){
+      db.ref=x.data.ref;
+    }
+  }
+}
+
 function queue(){if(SB.url&&ses){clearTimeout(tm);tm=setTimeout(sync,900)}}
-async function sync(){if(!SB.url||!ses)return;if(busy){again=true;return}busy=true;try{const t=await token();const cur=rowsOf(),m={},up=[];for(const id in cur){const j=JSON.stringify(cur[id]);m[id]=j;if(syn.m[id]!==j)up.push({id,kind:id.split(':')[0],data:cur[id],deleted:false})}for(const id in syn.m){if(!(id in cur))up.push({id,kind:id.split(':')[0],data:null,deleted:true})}if(up.length){const r=await fetch(SB.url+'/rest/v1/items?on_conflict=id',{method:'POST',headers:{...H(t),Prefer:'resolution=merge-duplicates'},body:JSON.stringify(up)});if(!r.ok)throw new Error(await r.text())}const since=syn.last?`&updated_at=gt.${encodeURIComponent(syn.last)}`:'';let rows=[],o=0;for(;;){const r=await fetch(SB.url+`/rest/v1/items?select=*&order=updated_at.asc,id.asc${since}&limit=1000&offset=${o}`,{headers:H(t)});if(!r.ok)throw new Error(await r.text());const p=await r.json();rows=rows.concat(p);if(p.length<1000)break;o+=1000}if(rows.length){rows.forEach(x=>applyRow(x.id,x.data,x.deleted));const now=rowsOf();rows.forEach(x=>{if(x.id in now)syn.m[x.id]=JSON.stringify(now[x.id]);else delete syn.m[x.id]});syn.last=rows[rows.length-1].updated_at;localStorage.setItem(KEY,JSON.stringify(db))}syn.m=m;localStorage.setItem('starosta.syn',JSON.stringify(syn));stat='обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});if(rows.length&&!$('#sheet').classList.contains('on'))render()}catch(e){stat='ошибка: '+String(e.message).slice(0,90)}finally{busy=false;if(again){again=false;sync()}}}
+
+async function sync(){
+  if(!SB.url||!ses)return;
+  if(busy){again=true;return}
+  busy=true;
+  again=false;
+  
+  try{
+    const t=await token();
+    const cur=rowsOf(),m={},up=[];
+    for(const id in cur){
+      const j=JSON.stringify(cur[id]);
+      m[id]=j;
+      if(syn.m[id]!==j)up.push({id,kind:id.split(':')[0],data:cur[id],deleted:false})
+    }
+    for(const id in syn.m){
+      if(!(id in cur))up.push({id,kind:id.split(':')[0],data:null,deleted:true})
+    }
+    if(up.length){
+      const r=await fetch(SB.url+'/rest/v1/items?on_conflict=id',{method:'POST',headers:{...H(t),Prefer:'resolution=merge-duplicates'},body:JSON.stringify(up)});
+      if(!r.ok)throw new Error(await r.text())
+    }
+    const since=syn.last?`&updated_at=gt.${encodeURIComponent(syn.last)}`:'';
+    let rows=[],o=0;
+    for(;;){
+      const r=await fetch(SB.url+`/rest/v1/items?select=*&order=updated_at.asc,id.asc${since}&limit=1000&offset=${o}`,{headers:H(t)});
+      if(!r.ok)throw new Error(await r.text());
+      const p=await r.json();
+      rows=rows.concat(p);
+      if(p.length<1000)break;
+      o+=1000
+    }
+    
+    // ИСПРАВЛЕНИЕ: используем applyServerData вместо поштучного applyRow
+    if(rows.length){
+      applyServerData(rows);
+      const now=rowsOf();
+      rows.forEach(x=>{
+        if(x.id in now)syn.m[x.id]=JSON.stringify(now[x.id]);
+        else delete syn.m[x.id]
+      });
+      syn.last=rows[rows.length-1].updated_at;
+      localStorage.setItem(KEY,JSON.stringify(db))
+    }
+    syn.m=m;
+    localStorage.setItem('starosta.syn',JSON.stringify(syn));
+    stat='обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    if(rows.length&&!$('#sheet').classList.contains('on'))render()
+  }catch(e){
+    stat='ошибка: '+String(e.message).slice(0,90)
+  }finally{
+    busy=false;
+    if(again){again=false;sync()}
+  }
+}
 
 const syncCard=()=>`<h2 class="section-title">#Синхронизация</h2><div class="card">${ses?`<small class="mut">Вход выполнен · ${esc(stat)}</small><div class="acts"><button class="pr" data-a="syncnow">Обновить</button><button class="ghost" data-a="sblogout">Выйти</button></div>`:`<div class="card-quote">Войди чтобы синхронизировать данные между устройствами через облако.</div><label>Email</label><input id="sbe" type="email" autocomplete="username"><label>Пароль</label><input id="sbp" type="password" autocomplete="current-password"><button class="pr" data-a="sblogin" style="width:100%">Войти</button>`}</div>`;
 
@@ -323,7 +411,6 @@ const rows=()=>[['ФИО',...cols.map(k=>COLS.find(c=>c[0]===k)[1])],...db.stude
 const csv=()=>rows().map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
 const expCard=()=>`<h2 class="section-title">#Выгрузка <span class="count">CSV</span></h2><div class="card"><small class="mut" style="display:block;margin-bottom:8px">ФИО будет всегда. Отметь остальные столбцы:</small><div id="cols">${COLS.map(([k,n])=>`<label class="ck"><input type="checkbox" value="${k}" ${cols.includes(k)?'checked':''}>${n}</label>`).join('')}</div><div class="acts"><button class="pr" data-a="exp">Скачать CSV</button><button class="ghost" data-a="expc">Копировать</button></div></div>`;
 
-// ===== SEED С ЖЁСТКИМИ ID (исправление дублей) =====
 if(!db.seeded){
  if(!db.lessons.length&&!db.teachers.length){
   const T=[['Иванова М.В.','асс. · Цифровые платформы'],['Бельмас С.М.','ст. пр. · Бизнес-архитектуры, ФЯП, Big Data'],['Ахметова М.И.','доц. · Финансовое моделирование'],['Широков А.А.','доц. · ОС, сети и телекоммуникации'],['Леонтьева С.М.','ст. пр. · Бухгалтерский и управленческий учёт']].map(([name,subj],i)=>({id:'t'+i,name,subj,phone:'',tg:'',mail:''}));
@@ -332,10 +419,6 @@ if(!db.seeded){
   db.lessons=[[0,'13:20','14:50',DP+' (пр)','516 гл.к.А',0],[0,'15:00','16:30',DP+' (лек)','502 гл.к.А',0],[0,'16:40','18:10',DP+' (пр)','516 гл.к.А',0],[1,'11:30','13:00',BA+' (лек)','509 гл.к.А',1],[1,'13:20','14:50',BA+' (пр)','509 гл.к.А',1],[1,'16:40','18:10',FP+' (лек)','дистант',1],[1,'18:20','19:50',FP+' (пр)','дистант',1],[3,'10:10','11:40','Физкультура (пр)','Спортзал ФОК',-1],[3,'15:00','16:30',BD+' (лек)','дистант',1],[3,'16:40','18:10',BD+' (пр)','дистант',1],[4,'13:20','14:50',FM+' (лек)','502 гл.к.А',2],[4,'15:00','16:30',FM+' (пр)','107 гл.к.А',2],[4,'16:40','18:10',FM+' (пр)','107 гл.к.А',2],[5,'09:40','11:10',OS+' (пр)','516 гл.к.А',3],[5,'11:30','13:00',OS+' (лек)','503 гл.к.А',3],[5,'13:20','14:50',BU+' (лек)','506 гл.к.А',4],[5,'15:00','16:30',BU+' (пр)','506 гл.к.А',4]].map(([day,start,end,subj,room,t],i)=>({id:'l'+i,day,start,end,subj,room,teacher:t<0?'':T[t].id,wk:0}));
  }
  db.seeded=1;save();
-} else {
-  const seen=new Set();
-  db.teachers=db.teachers.filter(t=>{if(seen.has(t.name)){return false}seen.add(t.name);return true});
-  save();
 }
 
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1800)}
@@ -346,10 +429,9 @@ const hwRow=x=>{const od=x.due&&x.due<iso(new Date())&&!x.done;return `<div clas
 
 function vToday(){
  const d=cur,ls=lessonsFor(d),k=iso(d);
- 
  let h=`<div class="hero">
    <div class="hero-left">
-     <div class="hero-arrow"></div>
+     <div class="hero-arrow">↯</div>
      <div class="hero-tags">
        <span class="hero-tag">#Староста</span>
        <span class="hero-tag">#${parity(d)===1?'нечётная':'чётная'}</span>
@@ -375,18 +457,15 @@ function vToday(){
    h+='<h2 class="section-title">#Напоминания <span class="count">'+reminders.length+'</span></h2>';
    reminders.slice(0,5).forEach(r=>{
      const cls=r.type==='bday'?'bday':r.urgent?'urgent':'';
-     let icon=r.type==='hw'?'📝':r.type==='bday'?'':'🎓';
+     let icon=r.type==='hw'?'📝':r.type==='bday'?'🎂':'🎓';
      let when=r.daysLeft===0?'СЕГОДНЯ':r.daysLeft===1?'ЗАВТРА':'ЧЕРЕЗ '+r.daysLeft+' ДН.';
      h+=`<div class="reminder ${cls}"><div class="rt">${icon} ${esc(r.text)}</div><div class="rd">${when}${r.time?' · '+r.time:''}</div></div>`;
    });
  }
- 
- if(!ls.length)h+='<div class="empty"><div class="big"></div>В этот день пар нет</div>';
- 
+ if(!ls.length)h+='<div class="empty"><div class="big">∅</div>В этот день пар нет</div>';
  for(const l of ls){
   const a=db.att[k+'|'+l.id]||{},n=db.notes[k+'|'+l.id],ab=Object.values(a).filter(x=>x==='a').length,mk=Object.keys(a).length;
   h+=`<div class="card les"><div class="row"><div class="tm">${l.start}<br><small class="mut">${l.end}</small></div><div class="fl"><b style="font-size:16px">${esc(l.subj)}</b><div class="mut" style="margin-top:2px;font-size:10px;text-transform:uppercase;letter-spacing:0.08em">${[l.room,tname(l.teacher)].filter(Boolean).map(esc).join(' · ')}</div></div>${mk?`<span class="pill ${ab?'bad':'ok'}">${ab?'н/б '+ab:'✓'}</span>`:''}</div><div class="acts"><button class="ghost" data-a="att" data-l="${l.id}">Посещаемость</button><button class="ghost" data-a="note" data-l="${l.id}">Заметка</button></div>${n?`<div class="note">${esc(n)}</div>`:''}</div>`}
- 
  return h}
 
 function vSched(){
@@ -404,14 +483,13 @@ function vTasks(){
  let h='<h2 class="section-title">#Домашки <button class="pr" data-a="hwe" data-i="">+ Задание</button></h2>';
  h+=u.length?u.map(hwRow).join(''):'<div class="empty"><div class="big">✓</div>Невыполненных заданий нет</div>';
  if(dn.length)h+=`<h3 style="text-transform:uppercase;letter-spacing:0.08em;font-size:11px;color:#6b6b6b">Готово <span class="pill">${dn.length}</span></h3>`+dn.map(hwRow).join('');
- 
  const today=iso(new Date());
  const upcoming=db.exams.filter(x=>x.date>=today).sort((a,b)=>a.date.localeCompare(b.date));
  if(upcoming.length){
    h+='<h2 class="section-title" style="margin-top:28px">#Сессия <button class="pr" data-a="exam" data-i="">+ Экзамен</button></h2>';
    upcoming.forEach(x=>{
      const daysLeft=Math.ceil((pd(x.date)-new Date())/864e5);
-     let countdown=daysLeft===0?'🔥 СЕГОДНЯ':daysLeft===1?' ЗАВТРА':'Осталось '+daysLeft+' дн.';
+     let countdown=daysLeft===0?'🔥 СЕГОДНЯ':daysLeft===1?'⏰ ЗАВТРА':'Осталось '+daysLeft+' дн.';
      h+=`<div class="exam-card" data-a="exam" data-i="${x.id}"><div class="edate">${x.date.slice(8)}.${x.date.slice(5,7)}${x.time?' · '+x.time:''}</div><div class="esubj">${esc(x.subj)}</div><div class="emut">${esc(x.type)}${x.teacher?' · '+tname(x.teacher):''}${x.room?' · '+esc(x.room):''}</div><div class="countdown">${countdown}</div></div>`;
    });
  }
@@ -422,45 +500,28 @@ function vGroup(){
  const gs=groupAttStats();
  let h='<h2 class="section-title">#Посещаемость</h2>';
  if(gs.total>0)h+=statsBlock(gs,'Группа');
- else h+='<div class="card-quote">Пока нет отметок. Отмечай студентов на парах — здесь появится статистика.</div>';
- 
+ else h+='<div class="card-quote">Пока нет отметок. Отмечай студентов на парах.</div>';
  const studentsWithStats=db.students.map(s=>({s,stats:studentAttStats(s.id)})).sort((a,b)=>{if(a.stats.total===0&&b.stats.total===0)return a.s.name.localeCompare(b.s.name,'ru');if(a.stats.total===0)return 1;if(b.stats.total===0)return -1;return a.stats.pct-b.stats.pct||a.s.name.localeCompare(b.s.name,'ru')});
- 
  h+=`<h2 class="section-title">#Студенты <span class="count">${db.students.length}</span> <button class="pr" data-a="se">+ Добавить</button></h2><div class="card">`;
  h+=studentsWithStats.length?studentsWithStats.map(({s,stats},i)=>{const pctDisplay=stats.total?`${stats.pct}%`:'—';const barColor=stats.total?(stats.pct>=80?'ok':stats.pct>=60?'warn':'bad'):'';return `<div class="srow" data-a="sp" data-i="${s.id}"><div class="fl"><div class="name">${i+1}. ${esc(s.name)}</div>${s.fl?`<small class="mut" ${flOld(s)?'style="color:#ff2d2d;font-weight:700"':''}>флюра: ${fdate(s.fl)}${flOld(s)?' · больше года':''}</small>`:''}${stats.total?`<div class="bar" style="margin-top:5px"><div class="bar-fill ${barColor}" style="width:${stats.pct}%"></div></div><small class="mut" style="text-transform:uppercase;letter-spacing:0.05em;font-size:9px">посещ. ${pctDisplay} · н/б: ${stats.a}</small>`:''}</div><span class="pill ${stats.total?(stats.pct>=80?'ok':stats.pct>=60?'warn':'bad'):''}">${pctDisplay}</span></div>`}).join(''):'<div class="empty"><div class="big"></div>Добавь студентов</div>';
  h+='</div>'+expCard();
- 
  h+='<h2 class="section-title">#Преподаватели <button class="pr" data-a="te" data-i="">+ Препод</button></h2>';
  h+=db.teachers.map(t=>`<div class="card"><div class="row" data-a="te" data-i="${t.id}"><div class="fl"><b style="font-size:15px">${esc(t.name)}</b><div class="mut" style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;margin-top:2px">${esc(t.subj)}</div></div></div><div class="acts" style="margin-top:8px">${t.phone?`<a href="tel:${esc(t.phone)}" class="tag">📞 ${esc(t.phone)}</a>`:''}${t.tg?`<a href="https://t.me/${esc(t.tg.replace('@',''))}" class="tag">✈️ @${esc(t.tg.replace('@',''))}</a>`:''}${t.mail?`<a href="mailto:${esc(t.mail)}" class="tag">✉️ почта</a>`:''}</div></div>`).join('');
- 
  const debtors=[];
- db.students.forEach(s=>{
-   const att=studentAttStats(s.id);
-   const overdueHw=db.hw.filter(h=>!h.done&&h.due&&h.due<iso(new Date())).length;
-   const totalIssues=att.a+overdueHw;
-   if(totalIssues>0||att.pct<80&&att.total>0){debtors.push({s,att,overdueHw,totalIssues})}
- });
+ db.students.forEach(s=>{const att=studentAttStats(s.id);const overdueHw=db.hw.filter(h=>!h.done&&h.due&&h.due<iso(new Date())).length;const totalIssues=att.a+overdueHw;if(totalIssues>0||att.pct<80&&att.total>0){debtors.push({s,att,overdueHw,totalIssues})}});
  debtors.sort((a,b)=>b.totalIssues-a.totalIssues||a.att.pct-b.att.pct);
- 
  if(debtors.length){
    h+='<h2 class="section-title" style="margin-top:24px">#Должники <span class="count">'+debtors.length+'</span></h2>';
-   debtors.slice(0,10).forEach((d,i)=>{
-     const reasons=[];
-     if(d.att.a>0)reasons.push(`пропусков: ${d.att.a}`);
-     if(d.overdueHw>0)reasons.push(`просрочено ДЗ: ${d.overdueHw}`);
-     if(d.att.pct<80&&d.att.total>0)reasons.push(`посещ. ${d.att.pct}%`);
-     h+=`<div class="debt-item" data-a="sp" data-i="${d.s.id}"><div class="rank">#${i+1}</div><div class="info"><div class="name">${esc(d.s.name)}</div><div class="meta">${reasons.join(' · ')}</div></div><span class="pill bad">${d.totalIssues}</span></div>`;
-   });
+   debtors.slice(0,10).forEach((d,i)=>{const reasons=[];if(d.att.a>0)reasons.push(`пропусков: ${d.att.a}`);if(d.overdueHw>0)reasons.push(`просрочено ДЗ: ${d.overdueHw}`);if(d.att.pct<80&&d.att.total>0)reasons.push(`посещ. ${d.att.pct}%`);h+=`<div class="debt-item" data-a="sp" data-i="${d.s.id}"><div class="rank">#${i+1}</div><div class="info"><div class="name">${esc(d.s.name)}</div><div class="meta">${reasons.join(' · ')}</div></div><span class="pill bad">${d.totalIssues}</span></div>`});
  } else {
-   h+='<h2 class="section-title" style="margin-top:24px">#Должники</h2><div class="card blue"><h3 style="margin:0;color:#fff;font-size:16px">Отлично!</h3><small style="color:rgba(255,255,255,0.85);display:block;margin-top:3px">Должников и прогульщиков нет.</small></div>';
+   h+='<h2 class="section-title" style="margin-top:24px">#Должники</h2><div class="card blue"><h3 style="margin:0;color:#fff;font-size:16px">Отлично!</h3><small style="color:rgba(255,255,255,0.85);display:block;margin-top:3px">Должников нет.</small></div>';
  }
- 
  return h}
 
 function vMore(){
  return (SB.url?syncCard():'')+`<h2 class="section-title">#Оформление</h2><div class="card"><div class="theme-toggle"><button class="theme-btn ${theme==='light'?'active':''}" data-a="settheme" data-t="light">☀️ Светлая</button><button class="theme-btn ${theme==='dark'?'active':''}" data-a="settheme" data-t="dark">🌙 Тёмная</button></div></div>
  <h2 class="section-title">#Настройки</h2><div class="card"><label>Понедельник нечётной недели</label><input type="date" id="ref" value="${db.ref}"><small class="mut" style="text-transform:uppercase;letter-spacing:0.05em">Сейчас: ${parity(new Date())===1?'нечётная':'чётная'} неделя</small></div>
- <h2 class="section-title">#Бэкап</h2><div class="card"><small class="mut" style="display:block;margin-bottom:8px">Данные хранятся локально. Делай бэкап время от времени.</small><textarea id="bk" placeholder="Здесь появится бэкап"></textarea><div class="acts"><button class="ghost" data-a="bkshow">Показать</button><button class="ghost" data-a="bkcopy">Копировать</button><button class="dg" data-a="bkload">Восстановить</button></div></div>`}
+ <h2 class="section-title">#Бэкап</h2><div class="card"><small class="mut" style="display:block;margin-bottom:8px">Данные хранятся локально.</small><textarea id="bk" placeholder="Здесь появится бэкап"></textarea><div class="acts"><button class="ghost" data-a="bkshow">Показать</button><button class="ghost" data-a="bkcopy">Копировать</button><button class="dg" data-a="bkload">Восстановить</button></div></div>`}
 
 function attSheet(){
  const l=db.lessons.find(x=>x.id===sh.l),a=db.att[sh.k+'|'+sh.l]||{},st=$('#pn').scrollTop;
@@ -475,7 +536,7 @@ const A={
  att:d=>{sh={l:d.l,k:iso(cur)};attSheet()},
  cyc:d=>{const key=sh.k+'|'+sh.l,a=db.att[key]=db.att[key]||{},n=ORD[ORD.indexOf(a[d.s])+1];n?a[d.s]=n:delete a[d.s];save();attSheet()},
  allp:()=>{const key=sh.k+'|'+sh.l,a=db.att[key]=db.att[key]||{};db.students.forEach(s=>a[s.id]='p');save();attSheet()},
- note:d=>{sh={l:d.l,k:iso(cur)};openSheet(`<h3>Заметка</h3><textarea id="nt" placeholder="Тема, что сдать, что принести">${esc(db.notes[sh.k+'|'+sh.l]||'')}</textarea><button class="pr" data-a="nsave" style="width:100%">Сохранить</button>`)},
+ note:d=>{sh={l:d.l,k:iso(cur)};openSheet(`<h3>Заметка</h3><textarea id="nt" placeholder="Тема, что сдать">${esc(db.notes[sh.k+'|'+sh.l]||'')}</textarea><button class="pr" data-a="nsave" style="width:100%">Сохранить</button>`)},
  nsave:()=>{const v=val('nt'),key=sh.k+'|'+sh.l;v?db.notes[key]=v:delete db.notes[key];save();shut()},
  le:d=>{const l=db.lessons.find(x=>x.id===d.l)||{day:dow(cur)>5?0:dow(cur),start:'08:30',end:'10:00',subj:'',room:'',teacher:'',wk:0};sh={l:l.id||''};
   openSheet(`<h3>${l.id?'Пара':'Новая пара'}</h3><label>Предмет</label><input id="ls" value="${esc(l.subj)}"><label>День</label><select id="ld">${DN.map((n,i)=>`<option value="${i}" ${i===l.day?'selected':''}>${n}</option>`).join('')}</select><div class="row"><div class="fl"><label>Начало</label><input type="time" id="l1" value="${l.start}"></div><div class="fl"><label>Конец</label><input type="time" id="l2" value="${l.end}"></div></div><label>Аудитория</label><input id="lr" value="${esc(l.room)}"><label>Преподаватель</label><select id="lt"><option value="">—</option>${db.teachers.map(t=>`<option value="${t.id}" ${t.id===l.teacher?'selected':''}>${esc(t.name)}</option>`).join('')}</select><label>Неделя</label><select id="lw">${['Каждая','Нечётная','Чётная'].map((n,i)=>`<option value="${i}" ${i===(l.wk||0)?'selected':''}>${n}</option>`).join('')}</select><div class="acts"><button class="pr" data-a="lsave">Сохранить</button>${l.id?'<button class="dg" data-a="ldel">Удалить</button>':''}</div>`)},
@@ -501,22 +562,19 @@ const A={
  esave:()=>{const o={type:$('#et').value,subj:val('es'),date:$('#ed').value,time:$('#eti').value,room:val('er'),teacher:$('#et2').value};if(!o.subj||!o.date)return toast('Нужны предмет и дата');const x=db.exams.find(e=>e.id===sh.e);x?Object.assign(x,o):db.exams.push({id:uid(),...o});save();shut()},
  edel:()=>{if(confirm('Удалить экзамен?')){db.exams=db.exams.filter(e=>e.id!==sh.e);save();shut()}},
  sblogin:async()=>{
-  try{
-    await login(val('sbe'),val('sbp'));
-    toast('Вход выполнен');
-    
-    // Очищаем локальную базу перед загрузкой с сервера
-    db={students:[],teachers:[],lessons:[],att:{},notes:{},hw:[],exams:[],ref:'2026-08-31'};
-    syn={m:{},last:''};
-    localStorage.removeItem(KEY);
-    localStorage.removeItem('starosta.syn');
-    
-    await sync();
-    render();
-  }catch(e){
-    toast(e.message)
-  }
-},
+   try{
+     await login(val('sbe'),val('sbp'));
+     toast('Вход выполнен');
+     // Полная очистка перед загрузкой с сервера
+     db={students:[],teachers:[],lessons:[],att:{},notes:{},hw:[],exams:[],ref:'2026-08-31'};
+     syn={m:{},last:''};
+     localStorage.removeItem(KEY);
+     localStorage.removeItem('starosta.syn');
+     await new Promise(r=>setTimeout(r,300));
+     await sync();
+     render();
+   }catch(e){toast(e.message)}
+ },
  sblogout:()=>{ses=null;localStorage.removeItem('starosta.sb');render()},
  syncnow:async()=>{await sync();render();toast(stat)},
  bkshow:()=>{$('#bk').value=JSON.stringify(db)},

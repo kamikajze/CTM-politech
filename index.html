@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Староста">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Староста</title>
@@ -16,601 +16,404 @@
 html,body{height:100%}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  font-size:14px;line-height:1.4;
-  background:#f5f5f3;
-  color:#0a0a0a;
+  font-size:15px;line-height:1.5;
+  background:#f8f9fa;
+  color:#1a1a1a;
   padding-bottom:calc(72px + env(safe-area-inset-bottom));
 }
-@media(prefers-color-scheme:dark){
-  body{background:#0a0a0a;color:#f5f5f3}
+body.dark{
+  background:#1a1a1a;
+  color:#f0f0f0;
 }
-
-/* ===== ТИПОГРАФИКА ===== */
-.serif{font-family:ui-serif,"New York",Georgia,"Times New Roman",serif}
-.display{font-family:ui-serif,"New York",Georgia,serif;font-weight:900;letter-spacing:-0.04em;line-height:0.9}
 
 /* ===== HEADER ===== */
-.hero{
-  display:grid;
-  grid-template-columns:1fr 1.2fr;
-  gap:0;
-  border-bottom:3px solid #0a0a0a;
-  padding-bottom:16px;
-  margin-bottom:20px;
-  min-height:180px;
+.header{
+  padding:16px 0 12px;
+  margin-bottom:16px;
+  border-bottom:2px solid #e0e0e0;
 }
-@media(prefers-color-scheme:dark){.hero{border-color:#f5f5f3}}
-.hero-left{
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  padding:8px 16px 8px 0;
-  border-right:3px solid #0a0a0a;
-}
-@media(prefers-color-scheme:dark){.hero-left{border-color:#f5f5f3}}
-.hero-arrow{
-  font-size:72px;
-  line-height:0.8;
-  font-weight:900;
-  color:#0a0a0a;
-}
-@media(prefers-color-scheme:dark){.hero-arrow{color:#f5f5f3}}
-.hero-tags{
-  display:flex;
-  flex-wrap:wrap;
-  gap:4px;
-  margin-top:8px;
-}
-.hero-tag{
-  font-size:10px;
-  font-weight:600;
-  padding:3px 8px;
-  border:1.5px solid #0a0a0a;
-  border-radius:0;
-  text-transform:uppercase;
-  letter-spacing:0.05em;
-  background:transparent;
-  color:#0a0a0a;
-}
-@media(prefers-color-scheme:dark){.hero-tag{border-color:#f5f5f3;color:#f5f5f3}}
-.hero-right{
-  background:#1a1aff;
-  color:#fff;
-  padding:16px;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-  position:relative;
-  overflow:hidden;
-}
-.hero-right .year{
-  font-family:ui-serif,Georgia,serif;
-  font-weight:900;
-  font-size:48px;
-  letter-spacing:-0.04em;
-  line-height:0.9;
-  position:relative;
-  z-index:2;
-}
-.hero-right .title-scrambled{
-  position:absolute;
-  right:-10px;
-  top:50%;
-  transform:translateY(-50%) rotate(-12deg);
-  font-family:ui-serif,Georgia,serif;
-  font-weight:900;
-  font-size:52px;
-  letter-spacing:-0.05em;
-  line-height:0.85;
-  color:rgba(255,255,255,0.15);
-  white-space:nowrap;
-}
-
-/* ===== NAV TABS (как About me / Resume / Work) ===== */
-.nav-tabs{
-  display:flex;
-  border-bottom:2px solid #0a0a0a;
-  margin-bottom:20px;
-  overflow-x:auto;
-  scrollbar-width:none;
-}
-.nav-tabs::-webkit-scrollbar{display:none}
-@media(prefers-color-scheme:dark){.nav-tabs{border-color:#f5f5f3}}
-.nav-tab{
-  flex:none;
-  padding:10px 16px;
-  font-size:13px;
-  font-weight:600;
-  color:#6b6b6b;
-  background:none;
-  border:0;
-  border-bottom:3px solid transparent;
-  margin-bottom:-2px;
-  cursor:pointer;
-  white-space:nowrap;
-  text-transform:uppercase;
-  letter-spacing:0.05em;
-}
-.nav-tab.on{
-  color:#0a0a0a;
-  border-bottom-color:#1a1aff;
-}
-@media(prefers-color-scheme:dark){
-  .nav-tab{color:#8a8a8a}
-  .nav-tab.on{color:#f5f5f3}
-}
-
-/* ===== LAYOUT ===== */
-#app{max-width:640px;margin:0 auto;padding:0 16px 24px}
-
-h2.section-title{
-  font-family:ui-serif,Georgia,serif;
-  font-weight:900;
-  font-size:28px;
-  letter-spacing:-0.03em;
-  line-height:1;
-  margin:24px 0 14px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-h2.section-title .count{
-  font-size:14px;
-  font-weight:600;
-  padding:3px 10px;
-  border:1.5px solid #0a0a0a;
-  border-radius:0;
-  letter-spacing:0;
-  font-family:-apple-system,sans-serif;
-}
-@media(prefers-color-scheme:dark){h2.section-title .count{border-color:#f5f5f3}}
-
-h3{
+body.dark .header{border-color:#333}
+.header h1{
   font-family:ui-serif,Georgia,serif;
   font-weight:700;
-  font-size:18px;
-  margin:16px 0 8px;
+  font-size:28px;
   letter-spacing:-0.02em;
 }
+.header .sub{
+  font-size:13px;
+  color:#666;
+  margin-top:4px;
+}
+body.dark .header .sub{color:#999}
 
-.mut,small{color:#6b6b6b;font-size:12px}
-@media(prefers-color-scheme:dark){.mut,small{color:#8a8a8a}}
+/* ===== NAVIGATION DAYS ===== */
+.nav-days{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:20px;
+}
+.nav-days button{
+  background:#f0f0f0;
+  border:0;
+  border-radius:8px;
+  width:44px;
+  height:44px;
+  font-size:20px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+body.dark .nav-days button{background:#2a2a2a;color:#f0f0f0}
+.nav-days .current{
+  flex:1;
+  text-align:center;
+}
+.nav-days .current .day{
+  font-family:ui-serif,Georgia,serif;
+  font-weight:700;
+  font-size:20px;
+  text-transform:capitalize;
+}
+.nav-days .current .date{
+  font-size:12px;
+  color:#666;
+  margin-top:2px;
+}
+body.dark .nav-days .current .date{color:#999}
+
+/* ===== SECTIONS ===== */
+#app{max-width:640px;margin:0 auto;padding:0 16px 24px}
+
+h2{
+  font-family:ui-serif,Georgia,serif;
+  font-weight:700;
+  font-size:20px;
+  margin:24px 0 12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+h3{
+  font-family:ui-serif,Georgia,serif;
+  font-weight:600;
+  font-size:16px;
+  margin:16px 0 8px;
+}
+
+.mut,small{color:#666;font-size:12px}
+body.dark .mut,body.dark small{color:#999}
 
 /* ===== CARDS ===== */
 .card{
   background:#fff;
-  border:2px solid #0a0a0a;
-  border-radius:0;
+  border:1px solid #e0e0e0;
+  border-radius:12px;
   padding:14px;
   margin-bottom:10px;
 }
-@media(prefers-color-scheme:dark){
-  .card{background:#141414;border-color:#f5f5f3}
+body.dark .card{
+  background:#242424;
+  border-color:#333;
 }
-.card.black{
-  background:#0a0a0a;
-  color:#fff;
-  border-color:#0a0a0a;
-}
-@media(prefers-color-scheme:dark){.card.black{background:#f5f5f3;color:#0a0a0a;border-color:#f5f5f3}}
-.card.black .mut{color:rgba(255,255,255,0.6)}
-@media(prefers-color-scheme:dark){.card.black .mut{color:rgba(0,0,0,0.6)}}
-
-.card.blue{
-  background:#1a1aff;
-  color:#fff;
-  border-color:#1a1aff;
-}
-.card.blue .mut{color:rgba(255,255,255,0.75)}
-
 .card.les{
-  border-left:6px solid #1a1aff;
+  border-left:4px solid #4a90d9;
 }
 .card.danger{
-  border-left:6px solid #ff2d2d;
+  border-left:4px solid #e74c3c;
 }
-
-.card-quote{
-  border:2px solid #0a0a0a;
-  border-radius:0;
-  padding:14px 16px;
-  margin:10px 0;
-  font-family:ui-serif,Georgia,serif;
-  font-size:15px;
-  font-weight:500;
-  background:#fff;
-  position:relative;
-}
-@media(prefers-color-scheme:dark){.card-quote{border-color:#f5f5f3;background:#141414}}
 
 /* ===== BUTTONS ===== */
 button,input,select,textarea{font:inherit;color:inherit}
 button{
-  background:#0a0a0a;
+  background:#1a1a1a;
   color:#fff;
   border:0;
-  border-radius:0;
-  padding:11px 18px;
-  font-weight:700;
-  font-size:13px;
+  border-radius:8px;
+  padding:10px 16px;
+  font-weight:600;
+  font-size:14px;
   cursor:pointer;
-  text-transform:uppercase;
-  letter-spacing:0.05em;
-  transition:transform .1s;
 }
-button:active{transform:scale(0.97)}
-button.pr{background:#1a1aff;color:#fff}
-button.ghost{background:transparent;color:#0a0a0a;border:2px solid #0a0a0a}
-@media(prefers-color-scheme:dark){button.ghost{color:#f5f5f3;border-color:#f5f5f3}}
-button.dg{background:#ff2d2d;color:#fff}
-button.sm{padding:7px 12px;font-size:11px}
-h2.section-title button{font-size:11px;padding:7px 14px}
+body.dark button{background:#f0f0f0;color:#1a1a1a}
+button.pr{background:#4a90d9;color:#fff}
+button.ghost{background:transparent;color:#1a1a1a;border:1px solid #ccc}
+body.dark button.ghost{color:#f0f0f0;border-color:#555}
+button.dg{background:#e74c3c;color:#fff}
+button.sm{padding:6px 12px;font-size:12px}
+h2 button{font-size:12px;padding:6px 12px}
 
-.acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .acts button{flex:1}
 
 /* ===== FORMS ===== */
 input,select,textarea{
   width:100%;
   background:#fff;
-  border:2px solid #0a0a0a;
-  border-radius:0;
-  padding:12px 14px;
+  border:1px solid #ccc;
+  border-radius:8px;
+  padding:10px 12px;
   margin:6px 0 10px;
-  font-size:14px;
+  font-size:15px;
 }
-@media(prefers-color-scheme:dark){input,select,textarea{background:#141414;border-color:#f5f5f3}}
-input:focus,select:focus,textarea:focus{outline:none;border-color:#1a1aff}
+body.dark input,body.dark select,body.dark textarea{
+  background:#242424;
+  border-color:#444;
+  color:#f0f0f0;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#4a90d9}
 label{
-  font-size:10px;
-  color:#6b6b6b;
-  text-transform:uppercase;
-  letter-spacing:0.1em;
-  font-weight:700;
+  font-size:12px;
+  color:#666;
+  font-weight:600;
   display:block;
-  margin-top:12px;
+  margin-top:10px;
 }
-textarea{min-height:100px;resize:vertical;font-family:inherit}
+body.dark label{color:#999}
 
 /* ===== BOTTOM NAV ===== */
 #tabs{
   position:fixed;left:0;right:0;bottom:0;
   display:flex;
   background:#fff;
-  border-top:2px solid #0a0a0a;
+  border-top:1px solid #e0e0e0;
   padding-bottom:env(safe-area-inset-bottom);
   z-index:5;
 }
-@media(prefers-color-scheme:dark){#tabs{background:#0a0a0a;border-color:#f5f5f3}}
+body.dark #tabs{background:#1a1a1a;border-color:#333}
 #tabs button{
   flex:1;
   background:none;
   border-radius:0;
-  padding:10px 4px 8px;
-  font-size:9px;
-  color:#6b6b6b;
-  line-height:1.2;
-  font-weight:600;
-  text-transform:uppercase;
-  letter-spacing:0.05em;
+  padding:8px 4px 6px;
+  font-size:10px;
+  color:#666;
+  font-weight:500;
   border:0;
 }
-#tabs button.on{color:#0a0a0a;font-weight:800}
-@media(prefers-color-scheme:dark){#tabs button.on{color:#f5f5f3}}
+body.dark #tabs button{color:#999}
+#tabs button.on{color:#4a90d9;font-weight:600}
+body.dark #tabs button.on{color:#5aa3e8}
 #tabs span{display:block;font-size:18px;margin-bottom:2px}
 
-/* ===== PILLS / TAGS ===== */
+/* ===== PILLS ===== */
 .pill{
   display:inline-block;
   min-width:32px;
   text-align:center;
   padding:4px 10px;
-  border-radius:0;
-  font-weight:800;
+  border-radius:99px;
+  font-weight:600;
   font-size:11px;
-  background:#fff;
-  color:#0a0a0a;
-  border:1.5px solid #0a0a0a;
-  text-transform:uppercase;
-  letter-spacing:0.03em;
+  background:#f0f0f0;
+  color:#1a1a1a;
 }
-@media(prefers-color-scheme:dark){.pill{background:#141414;color:#f5f5f3;border-color:#f5f5f3}}
-.pill.ok{background:#0a0a0a;color:#fff;border-color:#0a0a0a}
-@media(prefers-color-scheme:dark){.pill.ok{background:#f5f5f3;color:#0a0a0a;border-color:#f5f5f3}}
-.pill.bad{background:#ff2d2d;color:#fff;border-color:#ff2d2d}
-.pill.warn{background:#ff8c00;color:#fff;border-color:#ff8c00}
-.pill.blue{background:#1a1aff;color:#fff;border-color:#1a1aff}
-
-.tag{
-  display:inline-block;
-  padding:3px 8px;
-  border-radius:0;
-  font-size:10px;
-  font-weight:700;
-  background:#fff;
-  color:#0a0a0a;
-  margin:2px;
-  border:1.5px solid #0a0a0a;
-  text-transform:uppercase;
-  letter-spacing:0.05em;
-}
-@media(prefers-color-scheme:dark){.tag{background:#141414;color:#f5f5f3;border-color:#f5f5f3}}
+body.dark .pill{background:#333;color:#f0f0f0}
+.pill.ok{background:#27ae60;color:#fff}
+.pill.bad{background:#e74c3c;color:#fff}
+.pill.warn{background:#f39c12;color:#fff}
 
 /* ===== ROWS ===== */
 .row{display:flex;align-items:center;gap:12px}
 .fl{flex:1;min-width:0}
-.tm{font-weight:800;font-variant-numeric:tabular-nums;min-width:48px;font-size:15px;font-family:ui-serif,Georgia,serif}
+.tm{font-weight:600;font-variant-numeric:tabular-nums;min-width:48px;font-size:15px}
 .srow{
   padding:12px 4px;
-  border-bottom:1px solid #0a0a0a;
+  border-bottom:1px solid #e0e0e0;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
-@media(prefers-color-scheme:dark){.srow{border-color:#f5f5f3}}
+body.dark .srow{border-color:#333}
 .srow:last-child{border-bottom:0}
-.srow .name{font-weight:700;font-size:14px}
+.srow .name{font-weight:600;font-size:14px}
 
 /* ===== SHEET ===== */
 .sheet{position:fixed;inset:0;display:none;z-index:9}
 .sheet.on{display:block}
-.bk{position:absolute;inset:0;background:rgba(0,0,0,0.7)}
+.bk{position:absolute;inset:0;background:rgba(0,0,0,0.5)}
 .pn{
   position:absolute;left:0;right:0;bottom:0;
   max-height:90%;overflow:auto;
   background:#fff;
-  border-top:3px solid #0a0a0a;
+  border-top:2px solid #e0e0e0;
   padding:20px 16px calc(24px + env(safe-area-inset-bottom));
   max-width:640px;margin:0 auto;
 }
-@media(prefers-color-scheme:dark){.pn{background:#0a0a0a;border-color:#f5f5f3}}
-.pn h3{margin-top:0;font-size:22px}
+body.dark .pn{background:#1a1a1a;border-color:#333}
+.pn h3{margin-top:0;font-size:20px}
 
 /* ===== TOAST ===== */
 #toast{
   position:fixed;left:50%;bottom:100px;
   transform:translateX(-50%);
-  background:#0a0a0a;color:#fff;
-  padding:10px 18px;
-  font-size:12px;font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:0.05em;
+  background:#1a1a1a;color:#fff;
+  padding:10px 16px;
+  font-size:13px;
   opacity:0;transition:.25s;pointer-events:none;z-index:20;
-  border:2px solid #fff;
+  border-radius:8px;
 }
-@media(prefers-color-scheme:dark){#toast{background:#f5f5f3;color:#0a0a0a;border-color:#0a0a0a}}
+body.dark #toast{background:#f0f0f0;color:#1a1a1a}
 #toast.on{opacity:1}
 
 /* ===== CHECKBOX HW ===== */
 .chk{
-  width:28px;height:28px;
-  border-radius:0;
-  border:2px solid #0a0a0a;
+  width:26px;height:26px;
+  border-radius:50%;
+  border:2px solid #ccc;
   padding:0;background:none;flex:none;
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;font-weight:900;
 }
-@media(prefers-color-scheme:dark){.chk{border-color:#f5f5f3}}
-.done .chk{background:#0a0a0a;border-color:#0a0a0a;color:#fff}
-@media(prefers-color-scheme:dark){.done .chk{background:#f5f5f3;color:#0a0a0a}}
-.done .fl{opacity:0.4;text-decoration:line-through}
+body.dark .chk{border-color:#555}
+.done .chk{background:#27ae60;border-color:#27ae60;color:#fff}
+.done .fl{opacity:0.5;text-decoration:line-through}
 
 /* ===== EMPTY ===== */
-.empty{text-align:center;color:#6b6b6b;padding:32px 16px;font-size:13px}
-.empty .big{font-family:ui-serif,Georgia,serif;font-size:64px;margin-bottom:8px;opacity:0.2;font-weight:900}
+.empty{text-align:center;color:#999;padding:32px 16px;font-size:14px}
 
 /* ===== STATS ===== */
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:12px 0;border:2px solid #0a0a0a}
-@media(prefers-color-scheme:dark){.stats-grid{border-color:#f5f5f3}}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
 .stat-box{
-  background:#fff;
-  padding:16px 10px;
+  background:#f8f9fa;
+  padding:12px 10px;
   text-align:center;
-  border-right:1px solid #0a0a0a;
-  border-bottom:1px solid #0a0a0a;
+  border-radius:8px;
 }
-.stat-box:nth-child(2n){border-right:0}
-.stat-box:nth-last-child(-n+2){border-bottom:0}
-@media(prefers-color-scheme:dark){
-  .stat-box{background:#141414;border-color:#f5f5f3}
-}
-.stat-box .num{font:900 36px/1 ui-serif,Georgia,serif;letter-spacing:-0.03em;color:#0a0a0a}
-@media(prefers-color-scheme:dark){.stat-box .num{color:#f5f5f3}}
-.stat-box .lbl{font-size:9px;color:#6b6b6b;margin-top:6px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700}
-.stat-box.ok{background:#0a0a0a}
+body.dark .stat-box{background:#242424}
+.stat-box .num{font:700 28px/1 ui-serif,Georgia,serif}
+.stat-box .lbl{font-size:10px;color:#666;margin-top:4px;font-weight:600}
+body.dark .stat-box .lbl{color:#999}
+.stat-box.ok{background:#27ae60;color:#fff}
 .stat-box.ok .num,.stat-box.ok .lbl{color:#fff}
-@media(prefers-color-scheme:dark){.stat-box.ok{background:#f5f5f3}.stat-box.ok .num,.stat-box.ok .lbl{color:#0a0a0a}}
-.stat-box.bad{background:#ff2d2d}
+.stat-box.bad{background:#e74c3c;color:#fff}
 .stat-box.bad .num,.stat-box.bad .lbl{color:#fff}
-.stat-box.warn{background:#ff8c00}
+.stat-box.warn{background:#f39c12;color:#fff}
 .stat-box.warn .num,.stat-box.warn .lbl{color:#fff}
-.stat-box.blue{background:#1a1aff}
-.stat-box.blue .num,.stat-box.blue .lbl{color:#fff}
 
-.bar{height:8px;background:#fff;border:2px solid #0a0a0a;margin:10px 0;position:relative}
-@media(prefers-color-scheme:dark){.bar{background:#141414;border-color:#f5f5f3}}
-.bar-fill{height:100%;background:#0a0a0a;transition:width .4s}
-@media(prefers-color-scheme:dark){.bar-fill{background:#f5f5f3}}
-.bar-fill.ok{background:#0a0a0a}
-@media(prefers-color-scheme:dark){.bar-fill.ok{background:#f5f5f3}}
-.bar-fill.bad{background:#ff2d2d}
-.bar-fill.warn{background:#ff8c00}
+.bar{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin:8px 0}
+body.dark .bar{background:#333}
+.bar-fill{height:100%;background:#27ae60;transition:width .3s;border-radius:3px}
+.bar-fill.bad{background:#e74c3c}
+.bar-fill.warn{background:#f39c12}
 
 .percent-big{
-  font:900 72px/1 ui-serif,Georgia,serif;
+  font:700 48px/1 ui-serif,Georgia,serif;
   text-align:center;
-  margin:16px 0 8px;
-  letter-spacing:-0.05em;
+  margin:10px 0 6px;
 }
-
-.stat-row{display:flex;justify-content:space-between;font-size:12px;padding:8px 0;border-bottom:1px dashed #0a0a0a;text-transform:uppercase;letter-spacing:0.05em}
-@media(prefers-color-scheme:dark){.stat-row{border-color:#f5f5f3}}
-.stat-row:last-child{border-bottom:0}
-.stat-row .lbl{color:#6b6b6b;font-weight:600}
-.stat-row .val{font-weight:800;font-variant-numeric:tabular-nums}
 
 /* ===== REMINDERS ===== */
 .reminder{
-  border:2px solid #0a0a0a;
-  border-left:6px solid #ff8c00;
-  padding:12px 14px;
+  border-left:4px solid #f39c12;
+  padding:10px 12px;
   margin:8px 0;
   background:#fff;
+  border-radius:0 8px 8px 0;
 }
-@media(prefers-color-scheme:dark){.reminder{border-color:#f5f5f3;background:#141414}}
-.reminder.urgent{border-left-color:#ff2d2d;background:#ff2d2d;color:#fff}
-.reminder.urgent .rd{color:rgba(255,255,255,0.85)}
-.reminder.bday{border-left-color:#ff2d78;background:#ff2d78;color:#fff}
-.reminder.bday .rd{color:rgba(255,255,255,0.85)}
-.reminder .rt{font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:0.03em}
-.reminder .rd{font-size:10px;color:#6b6b6b;margin-top:4px;font-weight:700;letter-spacing:0.08em}
+body.dark .reminder{background:#242424}
+.reminder.urgent{border-left-color:#e74c3c;background:#fff5f5}
+body.dark .reminder.urgent{background:#2a1a1a}
+.reminder.bday{border-left-color:#e91e88;background:#fff0f5}
+body.dark .reminder.bday{background:#2a1a20}
+.reminder .rt{font-weight:600;font-size:13px}
+.reminder .rd{font-size:11px;color:#666;margin-top:2px}
+body.dark .reminder .rd{color:#999}
 
 /* ===== EXAM ===== */
 .exam-card{
-  border:2px solid #0a0a0a;
-  border-left:6px solid #1a1aff;
-  padding:14px;
-  margin:10px 0;
+  border:1px solid #e0e0e0;
+  border-left:4px solid #4a90d9;
+  padding:12px;
+  margin:8px 0;
   background:#fff;
+  border-radius:8px;
   cursor:pointer;
 }
-@media(prefers-color-scheme:dark){.exam-card{border-color:#f5f5f3;background:#141414}}
-.exam-card .edate{font:800 11px/1 -apple-system,sans-serif;color:#1a1aff;text-transform:uppercase;letter-spacing:0.1em}
-.exam-card .esubj{font-family:ui-serif,Georgia,serif;font-weight:900;font-size:20px;margin:6px 0 4px;letter-spacing:-0.02em}
-.exam-card .emut{font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:0.05em;font-weight:600}
+body.dark .exam-card{border-color:#333;background:#242424}
+.exam-card .edate{font:600 11px/1 -apple-system,sans-serif;color:#4a90d9}
+.exam-card .esubj{font-family:ui-serif,Georgia,serif;font-weight:700;font-size:16px;margin:4px 0}
+.exam-card .emut{font-size:12px;color:#666}
+body.dark .exam-card .emut{color:#999}
 .countdown{
-  font:900 22px/1 ui-serif,Georgia,serif;
-  color:#ff2d2d;
-  margin-top:10px;
-  letter-spacing:-0.02em;
-  text-transform:uppercase;
+  font:700 16px/1 ui-serif,Georgia,serif;
+  color:#e74c3c;
+  margin-top:6px;
 }
-.countdown.today{animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
 /* ===== DEBTORS ===== */
 .debt-item{
-  border:2px solid #0a0a0a;
-  padding:12px 14px;
-  margin:8px 0;
+  border:1px solid #e0e0e0;
+  padding:10px 12px;
+  margin:6px 0;
   display:flex;align-items:center;gap:12px;
   background:#fff;
+  border-radius:8px;
   cursor:pointer;
 }
-@media(prefers-color-scheme:dark){.debt-item{border-color:#f5f5f3;background:#141414}}
+body.dark .debt-item{border-color:#333;background:#242424}
 .debt-item .rank{
-  font:900 32px/1 ui-serif,Georgia,serif;
-  color:#ff2d2d;
-  min-width:40px;
-  letter-spacing:-0.03em;
+  font:700 24px/1 ui-serif,Georgia,serif;
+  color:#e74c3c;
+  min-width:36px;
 }
 .debt-item .info{flex:1;min-width:0}
-.debt-item .name{font-weight:800;font-size:14px}
-.debt-item .meta{font-size:10px;color:#6b6b6b;margin-top:3px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700}
+.debt-item .name{font-weight:600;font-size:14px}
+.debt-item .meta{font-size:11px;color:#666;margin-top:2px}
+body.dark .debt-item .meta{color:#999}
 
 /* ===== NOTE ===== */
 .note{
   margin-top:10px;
   padding:10px 12px;
-  border-left:3px solid #1a1aff;
-  background:#fff;
-  border:2px solid #0a0a0a;
-  border-left:6px solid #1a1aff;
+  border-left:3px solid #4a90d9;
+  background:#f8f9fa;
   white-space:pre-wrap;
-  font-size:12px;
-  font-style:italic;
+  font-size:13px;
+  border-radius:0 6px 6px 0;
 }
-@media(prefers-color-scheme:dark){.note{background:#141414;border-color:#f5f5f3}}
+body.dark .note{background:#242424}
 
 /* ===== CHECKBOX COLS ===== */
 .ck{
   display:flex;align-items:center;gap:10px;
-  font-size:13px;color:#0a0a0a;
+  font-size:13px;color:#1a1a1a;
   margin:6px 0;
-  padding:10px;
-  border:2px solid #0a0a0a;
+  padding:8px;
+  border:1px solid #ccc;
+  border-radius:6px;
   cursor:pointer;
-  font-weight:600;
-  text-transform:uppercase;
-  letter-spacing:0.03em;
-  font-size:11px;
-}
-@media(prefers-color-scheme:dark){.ck{color:#f5f5f3;border-color:#f5f5f3}}
-.ck input{width:18px;height:18px;margin:0;flex:none;border-radius:0}
-.ck:hover{background:#0a0a0a;color:#fff}
-@media(prefers-color-scheme:dark){.ck:hover{background:#f5f5f3;color:#0a0a0a}}
-
-a{color:#1a1aff;font-weight:700;text-decoration:none}
-
-/* ===== DECORATIVE ===== */
-.deco-line{
-  height:3px;
-  background:#0a0a0a;
-  margin:20px 0;
-}
-@media(prefers-color-scheme:dark){.deco-line{background:#f5f5f3}}
-
-.intro-block{
-  border:2px solid #0a0a0a;
-  padding:14px 16px;
-  margin:12px 0;
-  background:#fff;
-  font-family:ui-serif,Georgia,serif;
-  font-size:14px;
   font-weight:500;
-  line-height:1.5;
 }
-@media(prefers-color-scheme:dark){.intro-block{border-color:#f5f5f3;background:#141414}}
+body.dark .ck{color:#f0f0f0;border-color:#444}
+.ck input{width:18px;height:18px;margin:0;flex:none}
 
-.contact-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
+a{color:#4a90d9;font-weight:600;text-decoration:none}
+
+/* ===== THEME TOGGLE ===== */
+.theme-toggle{
+  display:flex;
   gap:0;
-  border:2px solid #0a0a0a;
+  border:1px solid #ccc;
+  border-radius:8px;
+  overflow:hidden;
   margin:10px 0;
 }
-@media(prefers-color-scheme:dark){.contact-grid{border-color:#f5f5f3}}
-.contact-cell{
-  padding:14px 10px;
-  text-align:center;
-  border-right:1px solid #0a0a0a;
+body.dark .theme-toggle{border-color:#444}
+.theme-btn{
+  flex:1;
+  padding:10px;
   background:#fff;
+  color:#1a1a1a;
+  border:0;
+  font-weight:600;
+  font-size:13px;
   cursor:pointer;
+  border-right:1px solid #ccc;
 }
-.contact-cell:last-child{border-right:0}
-@media(prefers-color-scheme:dark){
-  .contact-cell{background:#141414;border-color:#f5f5f3}
-}
-.contact-cell .ic{font-size:24px;margin-bottom:4px}
-.contact-cell .lb{font-size:9px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:#6b6b6b}
-.contact-cell.blue{background:#1a1aff;color:#fff}
-.contact-cell.blue .lb{color:rgba(255,255,255,0.8)}
-.contact-cell.black{background:#0a0a0a;color:#fff}
-@media(prefers-color-scheme:dark){.contact-cell.black{background:#f5f5f3;color:#0a0a0a}}
-.contact-cell.black .lb{color:rgba(255,255,255,0.7)}
-@media(prefers-color-scheme:dark){.contact-cell.black .lb{color:rgba(0,0,0,0.7)}}
-
-/* ===== TIMELINE ===== */
-.timeline-item{
-  position:relative;
-  padding:10px 0 10px 24px;
-  border-left:2px solid #0a0a0a;
-  margin-left:8px;
-}
-@media(prefers-color-scheme:dark){.timeline-item{border-color:#f5f5f3}}
-.timeline-item::before{
-  content:'';
-  position:absolute;
-  left:-7px;top:14px;
-  width:12px;height:12px;
-  border-radius:50%;
-  background:#1a1aff;
-  border:2px solid #fff;
-}
-@media(prefers-color-scheme:dark){.timeline-item::before{border-color:#0a0a0a}}
-.timeline-item .tdate{font-size:10px;font-weight:800;color:#1a1aff;text-transform:uppercase;letter-spacing:0.08em}
-.timeline-item .ttitle{font-weight:800;font-size:14px;margin-top:2px}
-.timeline-item .tsub{font-size:11px;color:#6b6b6b;margin-top:2px}
+.theme-btn:last-child{border-right:0}
+body.dark .theme-btn{background:#242424;color:#f0f0f0;border-color:#444}
+.theme-btn.active{background:#4a90d9;color:#fff}
 </style>
 </head>
 <body>
@@ -620,10 +423,20 @@ a{color:#1a1aff;font-weight:700;text-decoration:none}
 <div id="toast"></div>
 <script>
 const $=s=>document.querySelector(s);
-const KEY='starosta.v1',DN=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const KEY='starosta.v1',DN=['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
 const ST={p:['✓','ok'],a:['н/б','bad'],e:['У','warn'],l:['оп.','warn']},ORD=['p','a','e','l'];
 let db={};try{db=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}
 db=Object.assign({students:[],teachers:[],lessons:[],att:{},notes:{},hw:[],exams:[],ref:'2026-08-31'},db);
+
+// ===== ТЕМА =====
+let theme=localStorage.getItem('starosta.theme')||'light';
+function applyTheme(){
+  if(theme==='dark')document.body.classList.add('dark');
+  else document.body.classList.remove('dark');
+  document.querySelector('meta[name="theme-color"]').content=theme==='dark'?'#1a1a1a':'#ffffff';
+}
+applyTheme();
+
 let tab='today',cur=new Date(),sh={};cur.setHours(12,0,0,0);
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Не удалось сохранить')}queue()};
 const uid=()=>Math.random().toString(36).slice(2,9);
@@ -652,10 +465,7 @@ function groupAttStats(){
 }
 function statsBlock(s,title){
   return `<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
-      <h3 style="margin:0;font-size:14px;text-transform:uppercase;letter-spacing:0.08em">${title}</h3>
-      <small class="mut">${s.total} отметок</small>
-    </div>
+    <h3 style="margin:0 0 8px">${title}</h3>
     <div class="percent-big ${s.pct>=80?'ok':s.pct>=60?'warn':'bad'}">${s.pct}%</div>
     <div class="bar"><div class="bar-fill ${s.pct>=80?'ok':s.pct>=60?'warn':'bad'}" style="width:${s.pct}%"></div></div>
     <div class="stats-grid">
@@ -713,7 +523,7 @@ function applyRow(id,d,del){const i=id.indexOf(':'),kind=id.slice(0,i),rest=id.s
 function queue(){if(SB.url&&ses){clearTimeout(tm);tm=setTimeout(sync,900)}}
 async function sync(){if(!SB.url||!ses)return;if(busy){again=true;return}busy=true;try{const t=await token();const cur=rowsOf(),m={},up=[];for(const id in cur){const j=JSON.stringify(cur[id]);m[id]=j;if(syn.m[id]!==j)up.push({id,kind:id.split(':')[0],data:cur[id],deleted:false})}for(const id in syn.m){if(!(id in cur))up.push({id,kind:id.split(':')[0],data:null,deleted:true})}if(up.length){const r=await fetch(SB.url+'/rest/v1/items?on_conflict=id',{method:'POST',headers:{...H(t),Prefer:'resolution=merge-duplicates'},body:JSON.stringify(up)});if(!r.ok)throw new Error(await r.text())}const since=syn.last?`&updated_at=gt.${encodeURIComponent(syn.last)}`:'';let rows=[],o=0;for(;;){const r=await fetch(SB.url+`/rest/v1/items?select=*&order=updated_at.asc,id.asc${since}&limit=1000&offset=${o}`,{headers:H(t)});if(!r.ok)throw new Error(await r.text());const p=await r.json();rows=rows.concat(p);if(p.length<1000)break;o+=1000}if(rows.length){rows.forEach(x=>applyRow(x.id,x.data,x.deleted));const now=rowsOf();rows.forEach(x=>{if(x.id in now)syn.m[x.id]=JSON.stringify(now[x.id]);else delete syn.m[x.id]});syn.last=rows[rows.length-1].updated_at;localStorage.setItem(KEY,JSON.stringify(db))}syn.m=m;localStorage.setItem('starosta.syn',JSON.stringify(syn));stat='обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});if(rows.length&&!$('#sheet').classList.contains('on'))render()}catch(e){stat='ошибка: '+String(e.message).slice(0,90)}finally{busy=false;if(again){again=false;sync()}}}
 
-const syncCard=()=>`<h2 class="section-title">☁️ Синхронизация</h2><div class="card">${ses?`<small class="mut">Вход выполнен · ${esc(stat)}</small><div class="acts"><button class="pr" data-a="syncnow">Обновить</button><button class="ghost" data-a="sblogout">Выйти</button></div>`:`<div class="intro-block">Войди чтобы синхронизировать данные между устройствами через облако.</div><label>Email</label><input id="sbe" type="email" autocomplete="username"><label>Пароль</label><input id="sbp" type="password" autocomplete="current-password"><button class="pr" data-a="sblogin" style="width:100%">Войти</button>`}</div>`;
+const syncCard=()=>`<h2>☁️ Синхронизация</h2><div class="card">${ses?`<small class="mut">Вход выполнен · ${esc(stat)}</small><div class="acts"><button class="pr" data-a="syncnow">Обновить</button><button class="ghost" data-a="sblogout">Выйти</button></div>`:`<div style="padding:12px;background:#f8f9fa;border-radius:8px;margin-bottom:12px;font-size:14px">Войди чтобы синхронизировать данные между устройствами через облако.</div><label>Email</label><input id="sbe" type="email" autocomplete="username"><label>Пароль</label><input id="sbp" type="password" autocomplete="current-password"><button class="pr" data-a="sblogin" style="width:100%">Войти</button>`}</div>`;
 
 const COLS=[['fl','Дата флюры'],['dob','Дата рождения'],['hg','Группа здоровья'],['zk','Номер зачётки'],['phone','Телефон'],['mail','Почта']];
 let cols=['fl'];
@@ -721,8 +531,9 @@ const fdate=s=>s?s.split('-').reverse().join('.'):'';
 const flOld=s=>s.fl&&Date.now()-pd(s.fl)>365*864e5;
 const rows=()=>[['ФИО',...cols.map(k=>COLS.find(c=>c[0]===k)[1])],...db.students.map(s=>[s.name,...cols.map(k=>k==='fl'?fdate(s.fl):s[k]||'')])];
 const csv=()=>rows().map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
-const expCard=()=>`<h2 class="section-title">#Выгрузка <span class="count">CSV</span></h2><div class="card"><small class="mut" style="display:block;margin-bottom:10px">ФИО будет всегда. Отметь остальные столбцы:</small><div id="cols">${COLS.map(([k,n])=>`<label class="ck"><input type="checkbox" value="${k}" ${cols.includes(k)?'checked':''}>${n}</label>`).join('')}</div><div class="acts"><button class="pr" data-a="exp">Скачать CSV</button><button class="ghost" data-a="expc">Копировать</button></div></div>`;
+const expCard=()=>`<h2>📥 Выгрузка</h2><div class="card"><small class="mut" style="display:block;margin-bottom:10px">ФИО будет всегда. Отметь остальные столбцы:</small><div id="cols">${COLS.map(([k,n])=>`<label class="ck"><input type="checkbox" value="${k}" ${cols.includes(k)?'checked':''}>${n}</label>`).join('')}</div><div class="acts"><button class="pr" data-a="exp">Скачать CSV</button><button class="ghost" data-a="expc">Копировать</button></div></div>`;
 
+// ===== SEED С ПРОВЕРКОЙ ДУБЛЕЙ =====
 if(!db.seeded){
  if(!db.lessons.length&&!db.teachers.length){
   const T=[['Иванова М.В.','асс. · Цифровые платформы'],['Бельмас С.М.','ст. пр. · Бизнес-архитектуры, ФЯП, Big Data'],['Ахметова М.И.','доц. · Финансовое моделирование'],['Широков А.А.','доц. · ОС, сети и телекоммуникации'],['Леонтьева С.М.','ст. пр. · Бухгалтерский и управленческий учёт']].map(([name,subj])=>({id:uid(),name,subj,phone:'',tg:'',mail:''}));
@@ -731,119 +542,95 @@ if(!db.seeded){
   db.lessons=[[0,'13:20','14:50',DP+' (пр)','516 гл.к.А',0],[0,'15:00','16:30',DP+' (лек)','502 гл.к.А',0],[0,'16:40','18:10',DP+' (пр)','516 гл.к.А',0],[1,'11:30','13:00',BA+' (лек)','509 гл.к.А',1],[1,'13:20','14:50',BA+' (пр)','509 гл.к.А',1],[1,'16:40','18:10',FP+' (лек)','дистант',1],[1,'18:20','19:50',FP+' (пр)','дистант',1],[3,'10:10','11:40','Физкультура (пр)','Спортзал ФОК',-1],[3,'15:00','16:30',BD+' (лек)','дистант',1],[3,'16:40','18:10',BD+' (пр)','дистант',1],[4,'13:20','14:50',FM+' (лек)','502 гл.к.А',2],[4,'15:00','16:30',FM+' (пр)','107 гл.к.А',2],[4,'16:40','18:10',FM+' (пр)','107 гл.к.А',2],[5,'09:40','11:10',OS+' (пр)','516 гл.к.А',3],[5,'11:30','13:00',OS+' (лек)','503 гл.к.А',3],[5,'13:20','14:50',BU+' (лек)','506 гл.к.А',4],[5,'15:00','16:30',BU+' (пр)','506 гл.к.А',4]].map(([day,start,end,subj,room,t])=>({id:uid(),day,start,end,subj,room,teacher:t<0?'':T[t].id,wk:0}));
  }
  db.seeded=1;save();
+} else {
+  const seen=new Set();
+  db.teachers=db.teachers.filter(t=>{
+    if(seen.has(t.name)){return false}
+    seen.add(t.name);
+    return true;
+  });
+  save();
 }
 
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1800)}
 function openSheet(h){$('#pn').innerHTML=h;$('#sheet').classList.add('on')}
 function shut(){$('#sheet').classList.remove('on');render()}
 
-const hwRow=x=>{const od=x.due&&x.due<iso(new Date())&&!x.done;return `<div class="card row ${x.done?'done':''}"><button class="chk" data-a="hwd" data-i="${x.id}"></button><div class="fl" data-a="hwe" data-i="${x.id}"><b class="serif" style="font-size:16px">${esc(x.subj)}</b><div style="margin-top:3px;font-size:13px">${esc(x.text)}</div>${x.due?`<small style="${od?'color:#ff2d2d;font-weight:800':''};margin-top:4px;display:block;text-transform:uppercase;letter-spacing:0.05em;font-size:10px">до ${x.due.slice(8)}.${x.due.slice(5,7)}${od?' · ПРОСРОЧЕНО':''}</small>`:''}</div></div>`};
+const hwRow=x=>{const od=x.due&&x.due<iso(new Date())&&!x.done;return `<div class="card row ${x.done?'done':''}"><button class="chk" data-a="hwd" data-i="${x.id}"></button><div class="fl" data-a="hwe" data-i="${x.id}"><b style="font-size:15px">${esc(x.subj)}</b><div style="margin-top:4px;font-size:14px">${esc(x.text)}</div>${x.due?`<small style="${od?'color:#e74c3c;font-weight:600':''};margin-top:4px;display:block">до ${x.due.slice(8)}.${x.due.slice(5,7)}${od?' · просрочено':''}</small>`:''}</div></div>`};
 
 function vToday(){
  const d=cur,ls=lessonsFor(d),k=iso(d);
  const t=d.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
  
- let h=`<div class="hero">
-   <div class="hero-left">
-     <div class="hero-arrow">↯</div>
-     <div class="hero-tags">
-       <span class="hero-tag">#Посещаемость</span>
-       <span class="hero-tag">#ДЗ</span>
-       <span class="hero-tag">#Сессия</span>
-       <span class="hero-tag">#${parity(d)===1?'нечётная':'чётная'}</span>
-     </div>
+ let h=`<div class="header">
+   <h1>${t[0].toUpperCase()+t.slice(1)}</h1>
+   <div class="sub">${parity(d)===1?'нечётная':'чётная'} неделя${k===iso(new Date())?' · сегодня':''}</div>
+ </div>
+ <div class="nav-days">
+   <button data-a="day" data-n="-1">‹</button>
+   <div class="current">
+     <div class="day">${DN[dow(d)]}</div>
+     <div class="date">${d.toLocaleDateString('ru-RU')}</div>
    </div>
-   <div class="hero-right">
-     <div class="title-scrambled">СТАР<br>ОСТА</div>
-     <div class="year">${t[0].toUpperCase()+t.slice(1)}</div>
-   </div>
+   <button data-a="day" data-n="1">›</button>
  </div>`;
  
- // НАПОМИНАНИЯ
  const reminders=getReminders();
  if(reminders.length){
-   h+='<h2 class="section-title">#Напоминания <span class="count">'+reminders.length+'</span></h2>';
+   h+='<h2> Напоминания <span class="pill">'+reminders.length+'</span></h2>';
    reminders.slice(0,5).forEach(r=>{
      const cls=r.type==='bday'?'bday':r.urgent?'urgent':'';
-     let icon=r.type==='hw'?'📝':r.type==='bday'?'🎂':'🎓';
-     let when=r.daysLeft===0?'СЕГОДНЯ':r.daysLeft===1?'ЗАВТРА':'ЧЕРЕЗ '+r.daysLeft+' ДН.';
+     let icon=r.type==='hw'?'':r.type==='bday'?'':'🎓';
+     let when=r.daysLeft===0?'сегодня':r.daysLeft===1?'завтра':'через '+r.daysLeft+' дн.';
      h+=`<div class="reminder ${cls}"><div class="rt">${icon} ${esc(r.text)}</div><div class="rd">${when}${r.time?' · '+r.time:''}</div></div>`;
    });
  }
  
- if(!ls.length)h+='<div class="empty"><div class="big">∅</div>В этот день пар нет</div>';
+ if(!ls.length)h+='<div class="empty">В этот день пар нет</div>';
  
  for(const l of ls){
   const a=db.att[k+'|'+l.id]||{},n=db.notes[k+'|'+l.id],ab=Object.values(a).filter(x=>x==='a').length,mk=Object.keys(a).length;
-  h+=`<div class="card les"><div class="row"><div class="tm">${l.start}<br><small class="mut">${l.end}</small></div><div class="fl"><b class="serif" style="font-size:17px">${esc(l.subj)}</b><div class="mut" style="margin-top:3px;font-size:10px;text-transform:uppercase;letter-spacing:0.08em">${[l.room,tname(l.teacher)].filter(Boolean).map(esc).join(' · ')}</div></div>${mk?`<span class="pill ${ab?'bad':'ok'}">${ab?'н/б '+ab:'✓'}</span>`:''}</div><div class="acts"><button class="ghost" data-a="att" data-l="${l.id}">Посещаемость</button><button class="ghost" data-a="note" data-l="${l.id}">Заметка</button></div>${n?`<div class="note">${esc(n)}</div>`:''}</div>`}
- 
- const hw=db.hw.filter(x=>!x.done).sort((a,b)=>(a.due||'9').localeCompare(b.due||'9')).slice(0,5);
- if(hw.length)h+='<h2 class="section-title">#ДЗ <span class="count">'+hw.length+'</span></h2>'+hw.map(hwRow).join('');
+  h+=`<div class="card les"><div class="row"><div class="tm">${l.start}<br><small class="mut">${l.end}</small></div><div class="fl"><b style="font-size:16px">${esc(l.subj)}</b><div class="mut" style="margin-top:2px;font-size:12px">${[l.room,tname(l.teacher)].filter(Boolean).map(esc).join(' · ')}</div></div>${mk?`<span class="pill ${ab?'bad':'ok'}">${ab?'н/б '+ab:'✓'}</span>`:''}</div><div class="acts"><button class="ghost" data-a="att" data-l="${l.id}">Посещаемость</button><button class="ghost" data-a="note" data-l="${l.id}">Заметка</button></div>${n?`<div class="note">${esc(n)}</div>`:''}</div>`}
  
  return h}
 
-function vSched(){
- let h='<h2 class="section-title">#Расписание <button class="pr" data-a="le" data-l="">+ Пара</button></h2>';
- for(let i=0;i<6;i++){
-  const ls=db.lessons.filter(l=>l.day===i).sort((a,b)=>a.start.localeCompare(b.start));
-  if(!ls.length)continue;
-  h+=`<h3 style="text-transform:uppercase;letter-spacing:0.08em;font-size:13px;color:#6b6b6b;margin-top:20px">${DN[i]}</h3>`;
-  h+=ls.map(l=>`<div class="card les row" data-a="le" data-l="${l.id}"><div class="tm">${l.start}<br><small class="mut">${l.end}</small></div><div class="fl"><b class="serif" style="font-size:16px">${esc(l.subj)}</b><div class="mut" style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;margin-top:3px">${[l.room,tname(l.teacher),['','нечёт.','чёт.'][l.wk||0]].filter(Boolean).map(esc).join(' · ')}</div></div></div>`).join('')}
- if(!db.lessons.length)h+='<div class="empty"><div class="big">∅</div>Пока пусто</div>';
- return h}
-
-function vHw(){
+function vTasks(){
+ // ДЗ
  const u=db.hw.filter(x=>!x.done).sort((a,b)=>(a.due||'9').localeCompare(b.due||'9')),dn=db.hw.filter(x=>x.done);
- let h='<h2 class="section-title">#Домашки <button class="pr" data-a="hwe" data-i="">+ Задание</button></h2>';
- h+=u.length?u.map(hwRow).join(''):'<div class="empty"><div class="big">✓</div>Невыполненных заданий нет</div>';
- if(dn.length)h+=`<h3 style="text-transform:uppercase;letter-spacing:0.08em;font-size:12px;color:#6b6b6b">Готово <span class="pill">'+dn.length+'</span></h3>`+dn.map(hwRow).join('');
- return h}
-
-function vSession(){
+ let h='<h2>📝 Домашние задания <button class="pr" data-a="hwe" data-i="">+ Задание</button></h2>';
+ h+=u.length?u.map(hwRow).join(''):'<div class="empty">Невыполненных заданий нет</div>';
+ if(dn.length)h+=`<h3>Готово <span class="pill">${dn.length}</span></h3>`+dn.map(hwRow).join('');
+ 
+ // Экзамены
  const today=iso(new Date());
  const upcoming=db.exams.filter(x=>x.date>=today).sort((a,b)=>a.date.localeCompare(b.date));
- const past=db.exams.filter(x=>x.date<today).sort((a,b)=>b.date.localeCompare(a.date));
- let h='<h2 class="section-title">#Сессия <button class="pr" data-a="exam" data-i="">+ Экзамен</button></h2>';
- if(!db.exams.length){
-   h+='<div class="empty"><div class="big"></div>Добавь экзамены и зачёты</div>';
- } else {
-   if(upcoming.length){
-     h+='<h3 style="text-transform:uppercase;letter-spacing:0.08em;font-size:12px;color:#6b6b6b;margin-top:0">Предстоящие</h3>';
-     upcoming.forEach(x=>{
-       const daysLeft=Math.ceil((pd(x.date)-new Date())/864e5);
-       let countdown='';
-       if(daysLeft===0)countdown='<div class="countdown today">🔥 СЕГОДНЯ</div>';
-       else if(daysLeft===1)countdown='<div class="countdown"> ЗАВТРА</div>';
-       else countdown=`<div class="countdown">Осталось ${daysLeft} дн.</div>`;
-       h+=`<div class="exam-card" data-a="exam" data-i="${x.id}"><div class="edate">${x.date.slice(8)}.${x.date.slice(5,7)}${x.time?' · '+x.time:''}</div><div class="esubj">${esc(x.subj)}</div><div class="emut">${esc(x.type)}${x.teacher?' · '+tname(x.teacher):''}${x.room?' · '+esc(x.room):''}</div>${countdown}</div>`;
-     });
-   }
-   if(past.length){
-     h+='<h3 style="text-transform:uppercase;letter-spacing:0.08em;font-size:12px;color:#6b6b6b">Прошедшие</h3>';
-     past.slice(0,5).forEach(x=>{
-       h+=`<div class="exam-card" style="opacity:0.5" data-a="exam" data-i="${x.id}"><div class="edate">${x.date.slice(8)}.${x.date.slice(5,7)}</div><div class="esubj">${esc(x.subj)}</div><div class="emut">${esc(x.type)}</div></div>`;
-     });
-   }
+ if(upcoming.length){
+   h+='<h2 style="margin-top:28px">🎓 Экзамены и зачёты <button class="pr" data-a="exam" data-i="">+ Добавить</button></h2>';
+   upcoming.forEach(x=>{
+     const daysLeft=Math.ceil((pd(x.date)-new Date())/864e5);
+     let countdown=daysLeft===0?'сегодня':daysLeft===1?'завтра':'через '+daysLeft+' дн.';
+     h+=`<div class="exam-card" data-a="exam" data-i="${x.id}"><div class="edate">${x.date.slice(8)}.${x.date.slice(5,7)}${x.time?' · '+x.time:''}</div><div class="esubj">${esc(x.subj)}</div><div class="emut">${esc(x.type)}${x.teacher?' · '+tname(x.teacher):''}${x.room?' · '+esc(x.room):''}</div><div class="countdown">${countdown}</div></div>`;
+   });
  }
+ if(!db.exams.length)h+='<div class="empty" style="margin-top:20px">Нет экзаменов</div>';
  return h}
 
 function vGroup(){
  const gs=groupAttStats();
- let h='<h2 class="section-title">#Посещаемость</h2>';
- if(gs.total>0)h+=statsBlock(gs,'Группа');
- else h+='<div class="intro-block">Пока нет отметок. Отмечай студентов на парах — здесь появится статистика.</div>';
+ let h='<h2>📊 Посещаемость группы</h2>';
+ if(gs.total>0)h+=statsBlock(gs,'Общая');
+ else h+='<div class="card" style="padding:12px;background:#f8f9fa;border-radius:8px">Пока нет отметок. Отмечай студентов на парах.</div>';
  
  const studentsWithStats=db.students.map(s=>({s,stats:studentAttStats(s.id)})).sort((a,b)=>{if(a.stats.total===0&&b.stats.total===0)return a.s.name.localeCompare(b.s.name,'ru');if(a.stats.total===0)return 1;if(b.stats.total===0)return -1;return a.stats.pct-b.stats.pct||a.s.name.localeCompare(b.s.name,'ru')});
  
- h+=`<h2 class="section-title">#Студенты <span class="count">'+db.students.length+'</span> <button class="pr" data-a="se">+ Добавить</button></h2><div class="card">`;
- h+=studentsWithStats.length?studentsWithStats.map(({s,stats},i)=>{const pctDisplay=stats.total?`${stats.pct}%`:'—';const barColor=stats.total?(stats.pct>=80?'ok':stats.pct>=60?'warn':'bad'):'';return `<div class="srow" data-a="sp" data-i="${s.id}"><div class="fl"><div class="name">${i+1}. ${esc(s.name)}</div>${s.fl?`<small class="mut" ${flOld(s)?'style="color:#ff2d2d;font-weight:700"':''}>флюра: ${fdate(s.fl)}${flOld(s)?' · больше года':''}</small>`:''}${stats.total?`<div class="bar" style="margin-top:6px"><div class="bar-fill ${barColor}" style="width:${stats.pct}%"></div></div><small class="mut" style="text-transform:uppercase;letter-spacing:0.05em;font-size:10px">посещ. ${pctDisplay} · н/б: ${stats.a}</small>`:''}</div><span class="pill ${stats.total?(stats.pct>=80?'ok':stats.pct>=60?'warn':'bad'):''}">${pctDisplay}</span></div>`}).join(''):'<div class="empty"><div class="big"></div>Добавь студентов</div>';
+ h+=`<h2 style="margin-top:24px"> Студенты <span class="pill">${db.students.length}</span> <button class="pr" data-a="se">+ Добавить</button></h2><div class="card">`;
+ h+=studentsWithStats.length?studentsWithStats.map(({s,stats},i)=>{const pctDisplay=stats.total?`${stats.pct}%`:'—';const barColor=stats.total?(stats.pct>=80?'ok':stats.pct>=60?'warn':'bad'):'';return `<div class="srow" data-a="sp" data-i="${s.id}"><div class="fl"><div class="name">${i+1}. ${esc(s.name)}</div>${s.fl?`<small class="mut" ${flOld(s)?'style="color:#e74c3c;font-weight:600"':''}>флюра: ${fdate(s.fl)}${flOld(s)?' · больше года':''}</small>`:''}${stats.total?`<div class="bar" style="margin-top:6px"><div class="bar-fill ${barColor}" style="width:${stats.pct}%"></div></div><small class="mut">посещ. ${pctDisplay} · н/б: ${stats.a}</small>`:''}</div><span class="pill ${stats.total?(stats.pct>=80?'ok':stats.pct>=60?'warn':'bad'):''}">${pctDisplay}</span></div>`}).join(''):'<div class="empty">Добавь студентов</div>';
  h+='</div>'+expCard();
  
- h+='<h2 class="section-title">#Преподаватели <button class="pr" data-a="te" data-i="">+ Препод</button></h2>';
- h+=db.teachers.map(t=>`<div class="card"><div class="row" data-a="te" data-i="${t.id}"><div class="fl"><b class="serif" style="font-size:16px">${esc(t.name)}</b><div class="mut" style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;margin-top:3px">${esc(t.subj)}</div></div></div><div class="contact-grid" style="margin-top:10px">${t.phone?`<a href="tel:${esc(t.phone)}" class="contact-cell black"><div class="ic">📞</div><div class="lb">Позвонить</div></a>`:''}${t.tg?`<a href="https://t.me/${esc(t.tg.replace('@',''))}" class="contact-cell blue"><div class="ic">✈️</div><div class="lb">Telegram</div></a>`:''}${t.mail?`<a href="mailto:${esc(t.mail)}" class="contact-cell"><div class="ic">✉️</div><div class="lb">Почта</div></a>`:''}</div></div>`).join('');
- return h}
-
-function vDebtors(){
+ h+='<h2>👨‍🏫 Преподаватели <button class="pr" data-a="te" data-i="">+ Добавить</button></h2>';
+ h+=db.teachers.map(t=>`<div class="card"><div class="row" data-a="te" data-i="${t.id}"><div class="fl"><b style="font-size:15px">${esc(t.name)}</b><div class="mut" style="font-size:12px;margin-top:2px">${esc(t.subj)}</div></div></div><div class="acts" style="margin-top:8px">${t.phone?`<a href="tel:${esc(t.phone)}">📞 ${esc(t.phone)}</a>`:''}${t.tg?`<a href="https://t.me/${esc(t.tg.replace('@',''))}">✈️ @${esc(t.tg.replace('@',''))}</a>`:''}${t.mail?`<a href="mailto:${esc(t.mail)}">✉️ почта</a>`:''}</div></div>`).join('');
+ 
+ // Должники
  const debtors=[];
  db.students.forEach(s=>{
    const att=studentAttStats(s.id);
@@ -855,47 +642,29 @@ function vDebtors(){
  });
  debtors.sort((a,b)=>b.totalIssues-a.totalIssues||a.att.pct-b.att.pct);
  
- let h='<h2 class="section-title">#Должники</h2>';
- if(!debtors.length){
-   h+='<div class="card blue"><h3 style="margin:0;color:#fff;font-size:18px"> Отлично!</h3><small style="color:rgba(255,255,255,0.85);display:block;margin-top:4px">Должников и прогульщиков нет. Все молодцы!</small></div>';
- } else {
-   debtors.forEach((d,i)=>{
+ if(debtors.length){
+   h+='<h2 style="margin-top:24px">️ Должники</h2>';
+   debtors.slice(0,10).forEach((d,i)=>{
      const reasons=[];
      if(d.att.a>0)reasons.push(`пропусков: ${d.att.a}`);
      if(d.overdueHw>0)reasons.push(`просрочено ДЗ: ${d.overdueHw}`);
      if(d.att.pct<80&&d.att.total>0)reasons.push(`посещ. ${d.att.pct}%`);
      h+=`<div class="debt-item" data-a="sp" data-i="${d.s.id}"><div class="rank">#${i+1}</div><div class="info"><div class="name">${esc(d.s.name)}</div><div class="meta">${reasons.join(' · ')}</div></div><span class="pill bad">${d.totalIssues}</span></div>`;
    });
+ } else {
+   h+='<h2 style="margin-top:24px">✅ Должников нет</h2><div class="card" style="background:#e8f5e9;padding:12px">Все студенты успевают!</div>';
  }
  
- const overdueHw=db.hw.filter(h=>!h.done&&h.due&&h.due<iso(new Date())).sort((a,b)=>a.due.localeCompare(b.due));
- if(overdueHw.length){
-   h+='<h2 class="section-title">#Просрочено</h2>';
-   overdueHw.forEach(x=>{
-     const daysOverdue=Math.ceil((new Date()-pd(x.due))/864e5);
-     h+=`<div class="card danger"><b class="serif" style="font-size:16px">${esc(x.subj)}</b><div style="margin-top:3px">${esc(x.text)}</div><small style="color:#ff2d2d;font-weight:800;margin-top:6px;display:block;text-transform:uppercase;letter-spacing:0.05em;font-size:10px">+${daysOverdue} дн. · дедлайн ${x.due.slice(8)}.${x.due.slice(5,7)}</small></div>`;
-   });
- }
- 
- const gs=groupAttStats();
- if(gs.total>0){
-   h+='<h2 class="section-title">#Сводка</h2>';
-   h+=`<div class="stats-grid">
-     <div class="stat-box bad"><div class="num">${debtors.length}</div><div class="lbl">Должников</div></div>
-     <div class="stat-box warn"><div class="num">${overdueHw.length}</div><div class="lbl">Просрочено ДЗ</div></div>
-     <div class="stat-box ok"><div class="num">${gs.pct}%</div><div class="lbl">Посещаемость</div></div>
-     <div class="stat-box blue"><div class="num">${db.students.length}</div><div class="lbl">Всего</div></div>
-   </div>`;
- }
  return h}
 
 function vMore(){
- return (SB.url?syncCard():'')+`<h2 class="section-title">#Настройки</h2><div class="card"><label>Понедельник нечётной недели</label><input type="date" id="ref" value="${db.ref}"><small class="mut" style="text-transform:uppercase;letter-spacing:0.05em">Сейчас: ${parity(new Date())===1?'нечётная':'чётная'} неделя</small></div>
- <h2 class="section-title">#Бэкап</h2><div class="card"><small class="mut" style="display:block;margin-bottom:10px">Данные хранятся локально. Делай бэкап время от времени.</small><textarea id="bk" placeholder="Здесь появится бэкап. Для восстановления вставь его сюда"></textarea><div class="acts"><button class="ghost" data-a="bkshow">Показать</button><button class="ghost" data-a="bkcopy">Копировать</button><button class="dg" data-a="bkload">Восстановить</button></div></div>`}
+ return (SB.url?syncCard():'')+`<h2>🎨 Оформление</h2><div class="card"><div class="theme-toggle"><button class="theme-btn ${theme==='light'?'active':''}" data-a="settheme" data-t="light">☀️ Светлая</button><button class="theme-btn ${theme==='dark'?'active':''}" data-a="settheme" data-t="dark">🌙 Тёмная</button></div></div>
+ <h2>⚙️ Настройки</h2><div class="card"><label>Понедельник нечётной недели</label><input type="date" id="ref" value="${db.ref}"><small class="mut">Сейчас: ${parity(new Date())===1?'нечётная':'чётная'} неделя</small></div>
+ <h2>💾 Бэкап</h2><div class="card"><small class="mut" style="display:block;margin-bottom:10px">Данные хранятся локально. Делай бэкап время от времени.</small><textarea id="bk" placeholder="Здесь появится бэкап"></textarea><div class="acts"><button class="ghost" data-a="bkshow">Показать</button><button class="ghost" data-a="bkcopy">Копировать</button><button class="dg" data-a="bkload">Восстановить</button></div></div>`}
 
 function attSheet(){
  const l=db.lessons.find(x=>x.id===sh.l),a=db.att[sh.k+'|'+sh.l]||{},st=$('#pn').scrollTop;
- openSheet(`<h3 class="serif" style="font-size:24px">${esc(l.subj)}</h3><small class="mut" style="display:block;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.08em">Тап по строке меняет статус: ✓ был → н/б → У → оп.</small><div class="acts"><button class="ghost" data-a="allp">Все были</button><button class="pr" data-a="shut">Готово</button></div>`+(db.students.length?db.students.map(s=>{const v=a[s.id],[t,c]=v?ST[v]:['—',''];return `<div class="srow" data-a="cyc" data-s="${s.id}"><span class="name">${esc(s.name)}</span><span class="pill ${c}">${t}</span></div>`}).join(''):'<div class="empty">Сначала добавь студентов</div>'));
+ openSheet(`<h3>${esc(l.subj)}</h3><small class="mut" style="display:block;margin-bottom:12px">Тап по строке меняет статус: ✓ был → н/б → У → оп.</small><div class="acts"><button data-a="allp">Все были</button><button class="pr" data-a="shut">Готово</button></div>`+(db.students.length?db.students.map(s=>{const v=a[s.id],[t,c]=v?ST[v]:['—',''];return `<div class="srow" data-a="cyc" data-s="${s.id}"><span>${esc(s.name)}</span><span class="pill ${c}">${t}</span></div>`}).join(''):'<div class="empty">Сначала добавь студентов</div>'));
  $('#pn').scrollTop=st}
 
 const A={
@@ -906,29 +675,29 @@ const A={
  att:d=>{sh={l:d.l,k:iso(cur)};attSheet()},
  cyc:d=>{const key=sh.k+'|'+sh.l,a=db.att[key]=db.att[key]||{},n=ORD[ORD.indexOf(a[d.s])+1];n?a[d.s]=n:delete a[d.s];save();attSheet()},
  allp:()=>{const key=sh.k+'|'+sh.l,a=db.att[key]=db.att[key]||{};db.students.forEach(s=>a[s.id]='p');save();attSheet()},
- note:d=>{sh={l:d.l,k:iso(cur)};openSheet(`<h3 class="serif">Заметка</h3><textarea id="nt" placeholder="Тема, что сдать, что принести">${esc(db.notes[sh.k+'|'+sh.l]||'')}</textarea><button class="pr" data-a="nsave" style="width:100%">Сохранить</button>`)},
+ note:d=>{sh={l:d.l,k:iso(cur)};openSheet(`<h3>Заметка к паре</h3><textarea id="nt" placeholder="Тема, что сдать, что принести">${esc(db.notes[sh.k+'|'+sh.l]||'')}</textarea><button class="pr" data-a="nsave" style="width:100%">Сохранить</button>`)},
  nsave:()=>{const v=val('nt'),key=sh.k+'|'+sh.l;v?db.notes[key]=v:delete db.notes[key];save();shut()},
  le:d=>{const l=db.lessons.find(x=>x.id===d.l)||{day:dow(cur)>5?0:dow(cur),start:'08:30',end:'10:00',subj:'',room:'',teacher:'',wk:0};sh={l:l.id||''};
-  openSheet(`<h3 class="serif">${l.id?'Пара':'Новая пара'}</h3><label>Предмет</label><input id="ls" value="${esc(l.subj)}"><label>День</label><select id="ld">${DN.map((n,i)=>`<option value="${i}" ${i===l.day?'selected':''}>${n}</option>`).join('')}</select><div class="row"><div class="fl"><label>Начало</label><input type="time" id="l1" value="${l.start}"></div><div class="fl"><label>Конец</label><input type="time" id="l2" value="${l.end}"></div></div><label>Аудитория</label><input id="lr" value="${esc(l.room)}"><label>Преподаватель</label><select id="lt"><option value="">—</option>${db.teachers.map(t=>`<option value="${t.id}" ${t.id===l.teacher?'selected':''}>${esc(t.name)}</option>`).join('')}</select><label>Неделя</label><select id="lw">${['Каждая','Нечётная','Чётная'].map((n,i)=>`<option value="${i}" ${i===(l.wk||0)?'selected':''}>${n}</option>`).join('')}</select><div class="acts"><button class="pr" data-a="lsave">Сохранить</button>${l.id?'<button class="dg" data-a="ldel">Удалить</button>':''}</div>`)},
+  openSheet(`<h3>${l.id?'Пара':'Новая пара'}</h3><label>Предмет</label><input id="ls" value="${esc(l.subj)}"><label>День</label><select id="ld">${DN.map((n,i)=>`<option value="${i}" ${i===l.day?'selected':''}>${n}</option>`).join('')}</select><div class="row"><div class="fl"><label>Начало</label><input type="time" id="l1" value="${l.start}"></div><div class="fl"><label>Конец</label><input type="time" id="l2" value="${l.end}"></div></div><label>Аудитория</label><input id="lr" value="${esc(l.room)}"><label>Преподаватель</label><select id="lt"><option value="">—</option>${db.teachers.map(t=>`<option value="${t.id}" ${t.id===l.teacher?'selected':''}>${esc(t.name)}</option>`).join('')}</select><label>Неделя</label><select id="lw">${['Каждая','Нечётная','Чётная'].map((n,i)=>`<option value="${i}" ${i===(l.wk||0)?'selected':''}>${n}</option>`).join('')}</select><div class="acts"><button class="pr" data-a="lsave">Сохранить</button>${l.id?'<button class="dg" data-a="ldel">Удалить</button>':''}</div>`)},
  lsave:()=>{const o={subj:val('ls'),day:+$('#ld').value,start:$('#l1').value,end:$('#l2').value,room:val('lr'),teacher:$('#lt').value,wk:+$('#lw').value};if(!o.subj||!o.start)return toast('Нужны предмет и время');const l=db.lessons.find(x=>x.id===sh.l);l?Object.assign(l,o):db.lessons.push({id:uid(),...o});save();shut()},
  ldel:()=>{if(confirm('Удалить пару?')){db.lessons=db.lessons.filter(x=>x.id!==sh.l);save();shut()}},
- se:()=>openSheet(`<h3 class="serif">Добавить студентов</h3><small class="mut" style="display:block;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.08em">По одному на строку</small><textarea id="sn" style="min-height:200px"></textarea><button class="pr" data-a="ssave" style="width:100%">Добавить</button>`),
+ se:()=>openSheet(`<h3>Добавить студентов</h3><small class="mut" style="display:block;margin-bottom:10px">По одному на строку</small><textarea id="sn" style="min-height:200px"></textarea><button class="pr" data-a="ssave" style="width:100%">Добавить</button>`),
  ssave:()=>{$('#sn').value.split('\n').map(s=>s.trim()).filter(Boolean).forEach(n=>db.students.push({id:uid(),name:n}));save();shut()},
- sp:d=>{const s=db.students.find(x=>x.id===d.i);sh={s:s.id};const stats=studentAttStats(s.id);const statsHtml=stats.total?`<h3 class="serif">#Посещаемость</h3>${statsBlock(stats,s.name)}`:'';openSheet(`<h3 class="serif" style="font-size:24px">Профиль</h3><label>ФИО</label><input id="pnm" value="${esc(s.name)}"><label>Дата флюры</label><input type="date" id="pfl" value="${s.fl||''}"><label>Дата рождения</label><input type="date" id="pdob" value="${s.dob||''}"><label>Группа здоровья</label><input id="phg" placeholder="напр. I, II" value="${esc(s.hg)}"><label>Номер зачётки</label><input id="pzk" inputmode="numeric" value="${esc(s.zk)}"><label>Телефон</label><input id="pph" type="tel" value="${esc(s.phone)}"><label>Почта</label><input id="pml" type="email" value="${esc(s.mail)}">${statsHtml}<div class="acts"><button class="pr" data-a="spsave">Сохранить</button><button class="dg" data-a="spdel">Удалить</button></div>`)},
+ sp:d=>{const s=db.students.find(x=>x.id===d.i);sh={s:s.id};const stats=studentAttStats(s.id);const statsHtml=stats.total?`<h3> Посещаемость</h3>${statsBlock(stats,s.name)}`:'';openSheet(`<h3>Профиль студента</h3><label>ФИО</label><input id="pnm" value="${esc(s.name)}"><label>Дата флюры</label><input type="date" id="pfl" value="${s.fl||''}"><label>Дата рождения</label><input type="date" id="pdob" value="${s.dob||''}"><label>Группа здоровья</label><input id="phg" placeholder="напр. I, II" value="${esc(s.hg)}"><label>Номер зачётки</label><input id="pzk" inputmode="numeric" value="${esc(s.zk)}"><label>Телефон</label><input id="pph" type="tel" value="${esc(s.phone)}"><label>Почта</label><input id="pml" type="email" value="${esc(s.mail)}">${statsHtml}<div class="acts"><button class="pr" data-a="spsave">Сохранить</button><button class="dg" data-a="spdel">Удалить</button></div>`)},
  spsave:()=>{const s=db.students.find(x=>x.id===sh.s),n=val('pnm');if(!n)return toast('Нужно ФИО');Object.assign(s,{name:n,fl:$('#pfl').value,dob:$('#pdob').value,hg:val('phg'),zk:val('pzk'),phone:val('pph'),mail:val('pml')});save();shut()},
  spdel:()=>{const s=db.students.find(x=>x.id===sh.s);if(confirm('Удалить «'+s.name+'»?')){db.students=db.students.filter(x=>x!==s);save();shut()}},
  exp:async()=>{if(!db.students.length)return toast('Список пуст');const f=new File(['\ufeff'+csv()],'spisok.csv',{type:'text/csv'});try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(e){if(e.name==='AbortError')return}const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download='spisok.csv';document.body.appendChild(a);a.click();a.remove()},
  expc:async()=>{try{await navigator.clipboard.writeText(rows().map(r=>r.join('\t')).join('\n'));toast('Скопировано')}catch(e){toast('Не удалось скопировать')}},
  te:d=>{const t=db.teachers.find(x=>x.id===d.i)||{name:'',subj:'',phone:'',tg:'',mail:''};sh={t:t.id||''};
-  openSheet(`<h3 class="serif">Преподаватель</h3><label>ФИО</label><input id="tn" value="${esc(t.name)}"><label>Предмет</label><input id="ts" value="${esc(t.subj)}"><label>Телефон</label><input id="tp" type="tel" value="${esc(t.phone)}"><label>Telegram</label><input id="tg" placeholder="@username" value="${esc(t.tg)}"><label>Почта</label><input id="tm" type="email" value="${esc(t.mail)}"><div class="acts"><button class="pr" data-a="tsave">Сохранить</button>${t.id?'<button class="dg" data-a="tdel">Удалить</button>':''}</div>`)},
+  openSheet(`<h3>Преподаватель</h3><label>ФИО</label><input id="tn" value="${esc(t.name)}"><label>Предмет</label><input id="ts" value="${esc(t.subj)}"><label>Телефон</label><input id="tp" type="tel" value="${esc(t.phone)}"><label>Telegram</label><input id="tg" placeholder="@username" value="${esc(t.tg)}"><label>Почта</label><input id="tm" type="email" value="${esc(t.mail)}"><div class="acts"><button class="pr" data-a="tsave">Сохранить</button>${t.id?'<button class="dg" data-a="tdel">Удалить</button>':''}</div>`)},
  tsave:()=>{const o={name:val('tn'),subj:val('ts'),phone:val('tp'),tg:val('tg'),mail:val('tm')};if(!o.name)return toast('Нужно ФИО');const t=db.teachers.find(x=>x.id===sh.t);t?Object.assign(t,o):db.teachers.push({id:uid(),...o});save();shut()},
  tdel:()=>{if(confirm('Удалить преподавателя?')){db.teachers=db.teachers.filter(x=>x.id!==sh.t);save();shut()}},
  hwd:d=>{const x=db.hw.find(h=>h.id===d.i);x.done=!x.done;save();render()},
  hwe:d=>{const x=db.hw.find(h=>h.id===d.i)||{subj:'',text:'',due:''};sh={h:x.id||''};const subs=[...new Set(db.lessons.map(l=>l.subj))];
-  openSheet(`<h3 class="serif">Домашнее задание</h3><label>Предмет</label><input id="hs" list="hl" value="${esc(x.subj)}"><datalist id="hl">${subs.map(s=>`<option value="${esc(s)}">`).join('')}</datalist><label>Что задано</label><textarea id="ht">${esc(x.text)}</textarea><label>Срок сдачи</label><input type="date" id="hd" value="${x.due}"><div class="acts"><button class="pr" data-a="hsave">Сохранить</button>${x.id?'<button class="dg" data-a="hdel">Удалить</button>':''}</div>`)},
+  openSheet(`<h3>Домашнее задание</h3><label>Предмет</label><input id="hs" list="hl" value="${esc(x.subj)}"><datalist id="hl">${subs.map(s=>`<option value="${esc(s)}">`).join('')}</datalist><label>Что задано</label><textarea id="ht">${esc(x.text)}</textarea><label>Срок сдачи</label><input type="date" id="hd" value="${x.due}"><div class="acts"><button class="pr" data-a="hsave">Сохранить</button>${x.id?'<button class="dg" data-a="hdel">Удалить</button>':''}</div>`)},
  hsave:()=>{const o={subj:val('hs'),text:val('ht'),due:$('#hd').value};if(!o.text)return toast('Впиши задание');const x=db.hw.find(h=>h.id===sh.h);x?Object.assign(x,o):db.hw.push({id:uid(),done:false,...o});save();shut()},
  hdel:()=>{db.hw=db.hw.filter(h=>h.id!==sh.h);save();shut()},
- exam:d=>{const x=db.exams.find(e=>e.id===d.i)||{type:'Экзамен',subj:'',date:'',time:'',teacher:'',room:''};sh={e:x.id||''};openSheet(`<h3 class="serif">${x.id?'Экзамен/зачёт':'Новый экзамен'}</h3><label>Тип</label><select id="et">${['Экзамен','Зачёт','Диф. зачёт','Контрольная'].map(t=>`<option value="${t}" ${t===x.type?'selected':''}>${t}</option>`).join('')}</select><label>Предмет</label><input id="es" value="${esc(x.subj)}"><label>Дата</label><input type="date" id="ed" value="${x.date}"><label>Время</label><input type="time" id="eti" value="${x.time||''}"><label>Аудитория</label><input id="er" value="${esc(x.room)}"><label>Преподаватель</label><select id="et2"><option value="">—</option>${db.teachers.map(t=>`<option value="${t.id}" ${t.id===x.teacher?'selected':''}>${esc(t.name)}</option>`).join('')}</select><div class="acts"><button class="pr" data-a="esave">Сохранить</button>${x.id?'<button class="dg" data-a="edel">Удалить</button>':''}</div>`)},
+ exam:d=>{const x=db.exams.find(e=>e.id===d.i)||{type:'Экзамен',subj:'',date:'',time:'',teacher:'',room:''};sh={e:x.id||''};openSheet(`<h3>${x.id?'Экзамен/зачёт':'Новый экзамен'}</h3><label>Тип</label><select id="et">${['Экзамен','Зачёт','Диф. зачёт','Контрольная'].map(t=>`<option value="${t}" ${t===x.type?'selected':''}>${t}</option>`).join('')}</select><label>Предмет</label><input id="es" value="${esc(x.subj)}"><label>Дата</label><input type="date" id="ed" value="${x.date}"><label>Время</label><input type="time" id="eti" value="${x.time||''}"><label>Аудитория</label><input id="er" value="${esc(x.room)}"><label>Преподаватель</label><select id="et2"><option value="">—</option>${db.teachers.map(t=>`<option value="${t.id}" ${t.id===x.teacher?'selected':''}>${esc(t.name)}</option>`).join('')}</select><div class="acts"><button class="pr" data-a="esave">Сохранить</button>${x.id?'<button class="dg" data-a="edel">Удалить</button>':''}</div>`)},
  esave:()=>{const o={type:$('#et').value,subj:val('es'),date:$('#ed').value,time:$('#eti').value,room:val('er'),teacher:$('#et2').value};if(!o.subj||!o.date)return toast('Нужны предмет и дата');const x=db.exams.find(e=>e.id===sh.e);x?Object.assign(x,o):db.exams.push({id:uid(),...o});save();shut()},
  edel:()=>{if(confirm('Удалить экзамен?')){db.exams=db.exams.filter(e=>e.id!==sh.e);save();shut()}},
  sblogin:async()=>{try{await login(val('sbe'),val('sbp'));toast('Вход выполнен');await sync();render()}catch(e){toast(e.message)}},
@@ -936,14 +705,27 @@ const A={
  syncnow:async()=>{await sync();render();toast(stat)},
  bkshow:()=>{$('#bk').value=JSON.stringify(db)},
  bkcopy:async()=>{const t=$('#bk');if(!t.value)t.value=JSON.stringify(db);try{await navigator.clipboard.writeText(t.value);toast('Скопировано')}catch(e){t.select();toast('Скопируй вручную')}},
- bkload:()=>{try{const o=JSON.parse($('#bk').value);if(!o.students||!o.lessons)throw 0;if(confirm('Заменить все данные бэкапом?')){db=Object.assign(db,o);save();render();toast('Восстановлено')}}catch(e){toast('Это не бэкап')}}
+ bkload:()=>{try{const o=JSON.parse($('#bk').value);if(!o.students||!o.lessons)throw 0;if(confirm('Заменить все данные бэкапом?')){db=Object.assign(db,o);save();render();toast('Восстановлено')}}catch(e){toast('Это не бэкап')}},
+ settheme:d=>{theme=d.t;localStorage.setItem('starosta.theme',theme);applyTheme();render()}
 };
 
-const TABS=[['today','↯','Сегодня'],['sched','◫','Пары'],['hw','✎','ДЗ'],['session','','Сессия'],['debtors','⚠','Должники'],['group','◐','Группа'],['more','','Ещё']];
-const V={today:vToday,sched:vSched,hw:vHw,session:vSession,debtors:vDebtors,group:vGroup,more:vMore};
+// 5 вкладок вместо 7
+const TABS=[['today','','Сегодня'],['sched','🗓','Пары'],['tasks','📚','ДЗ и сессия'],['group','👥','Группа'],['more','⚙️','Ещё']];
+const V={today:vToday,sched:vSched,tasks:vTasks,group:vGroup,more:vMore};
 function render(){db.students.sort((a,b)=>a.name.localeCompare(b.name,'ru'));$('#app').innerHTML=V[tab]();$('#tabs').innerHTML=TABS.map(([k,i,n])=>`<button class="${k===tab?'on':''}" data-a="tab" data-t="${k}"><span>${i}</span>${n}</button>`).join('')}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a])A[t.dataset.a](t.dataset)});
 document.addEventListener('change',e=>{if(e.target.closest('#cols'))cols=[...document.querySelectorAll('#cols input:checked')].map(i=>i.value);if(e.target.id==='ref'&&e.target.value){db.ref=e.target.value;save();render()}});
+
+// Расписание
+function vSched(){
+ let h='<h2>🗓 Расписание <button class="pr" data-a="le" data-l="">+ Пара</button></h2>';
+ for(let i=0;i<6;i++){
+  const ls=db.lessons.filter(l=>l.day===i).sort((a,b)=>a.start.localeCompare(b.start));
+  if(!ls.length)continue;
+  h+=`<h3 style="margin-top:20px;color:#666">${DN[i]}</h3>`+ls.map(l=>`<div class="card les row" data-a="le" data-l="${l.id}"><div class="tm">${l.start}<br><small class="mut">${l.end}</small></div><div class="fl"><b>${esc(l.subj)}</b><div class="mut" style="font-size:12px;margin-top:2px">${[l.room,tname(l.teacher),['','нечёт.','чёт.'][l.wk||0]].filter(Boolean).map(esc).join(' · ')}</div></div></div>`).join('')}
+ if(!db.lessons.length)h+='<div class="empty">Пока пусто</div>';
+ return h}
+
 render();
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>

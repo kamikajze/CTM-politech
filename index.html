@@ -209,6 +209,8 @@ body.dark .theme-btn{background:#141414;color:#f5f5f3;border-color:#f5f5f3}
 const $=s=>document.querySelector(s);
 const KEY='starosta.v1',DN=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 const ST={p:['✓','ok'],a:['н/б','bad'],e:['У','warn'],l:['оп.','warn']},ORD=['p','a','e','l'];
+
+// Загружаем данные из localStorage
 let db={};try{db=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}
 db=Object.assign({students:[],teachers:[],lessons:[],att:{},notes:{},hw:[],exams:[],ref:'2026-08-31'},db);
 
@@ -221,6 +223,8 @@ function applyTheme(){
 applyTheme();
 
 let tab='today',cur=new Date(),sh={};cur.setHours(12,0,0,0);
+
+// Сохранение в localStorage
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Не удалось сохранить')}queue()};
 const uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -233,6 +237,7 @@ const lessonsFor=d=>{const w=parity(d);return db.lessons.filter(l=>l.day===dow(d
 const tname=id=>(db.teachers.find(t=>t.id===id)||{}).name||'';
 const val=id=>$('#'+id).value.trim();
 
+// ===== АНАЛИТИКА =====
 function studentAttStats(sid){
   let total=0,p=0,a=0,e=0,l=0;
   for(const k in db.att){const marks=db.att[k];if(marks[sid]){total++;if(marks[sid]==='p')p++;else if(marks[sid]==='a')a++;else if(marks[sid]==='e')e++;else if(marks[sid]==='l')l++;}}
@@ -293,6 +298,7 @@ function getReminders(){
   return reminders;
 }
 
+// ===== SUPABASE =====
 const SB={url:'https://jvnrfunimsbhoatbhoai.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2bnJmdW5pbXNiaG9hdGJob2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3MDQ5ODksImV4cCI6MjEwNjI4MDk4OX0.xwiQVKIz1k5MdjywyFjhe8g0aGjatYqtYAok1f9I-qo'};
 let ses=null,syn={m:{},last:''},stat='',busy=false,again=false,tm;
 try{ses=JSON.parse(localStorage.getItem('starosta.sb'))}catch(e){}
@@ -302,31 +308,48 @@ const setSes=j=>{ses={a:j.access_token,r:j.refresh_token,e:Date.now()+(j.expires
 async function login(email,password){const r=await fetch(SB.url+'/auth/v1/token?grant_type=password',{method:'POST',headers:H(),body:JSON.stringify({email,password})}),j=await r.json();if(!r.ok)throw new Error(j.error_description||j.msg||'Не удалось войти');setSes(j)}
 async function token(){if(!ses)throw new Error('нужен вход');if(Date.now()>ses.e){const r=await fetch(SB.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:H(),body:JSON.stringify({refresh_token:ses.r})}),j=await r.json();if(!r.ok){ses=null;localStorage.removeItem('starosta.sb');throw new Error('нужно войти заново')}setSes(j)}return ses.a}
 
-function rowsOf(){const r={};db.students.forEach(x=>r['student:'+x.id]=x);db.teachers.forEach(x=>r['teacher:'+x.id]=x);db.lessons.forEach(x=>r['lesson:'+x.id]=x);db.hw.forEach(x=>r['hw:'+x.id]=x);db.exams.forEach(x=>r['exam:'+x.id]=x);for(const k in db.att)for(const s in db.att[k])r['att:'+k+':'+s]={k,s,v:db.att[k][s]};for(const k in db.notes)r['note:'+k]={k,t:db.notes[k]};r['cfg:ref']={ref:db.ref};return r}
+// Собираем все данные в плоский вид для отправки на сервер
+function rowsOf(){
+  const r={};
+  db.students.forEach(x=>r['student:'+x.id]=x);
+  db.teachers.forEach(x=>r['teacher:'+x.id]=x);
+  db.lessons.forEach(x=>r['lesson:'+x.id]=x);
+  db.hw.forEach(x=>r['hw:'+x.id]=x);
+  db.exams.forEach(x=>r['exam:'+x.id]=x);
+  for(const k in db.att)for(const s in db.att[k])r['att:'+k+':'+s]={k,s,v:db.att[k][s]};
+  for(const k in db.notes)r['note:'+k]={k,t:db.notes[k]};
+  r['cfg:ref']={ref:db.ref};
+  return r;
+}
 
-function applyServerData(rows){
-  const byId={};
-  rows.forEach(x=>{
-    if(!byId[x.id]||new Date(x.updated_at)>new Date(byId[x.id].updated_at)){
-      byId[x.id]=x;
-    }
-  });
-  db={students:[],teachers:[],lessons:[],att:{},notes:{},hw:[],exams:[],ref:db.ref};
-  for(const id in byId){
-    const x=byId[id];
-    if(x.deleted)continue;
-    const i=id.indexOf(':'),kind=id.slice(0,i),rest=id.slice(i+1);
-    const L={student:'students',teacher:'teachers',lesson:'lessons',hw:'hw',exam:'exams'}[kind];
-    if(L){
-      db[L].push(x.data);
-    } else if(kind==='att'){
-      const[k,s]=rest.split(':');
-      (db.att[k]=db.att[k]||{})[s]=x.data.v;
-    } else if(kind==='note'){
-      db.notes[rest]=x.data.t;
-    } else if(kind==='cfg'&&x.data.ref){
-      db.ref=x.data.ref;
-    }
+// КЛЮЧЕВАЯ ФУНКЦИЯ: merge по ID без дублей
+// Обновляет существующую запись или добавляет новую, но никогда не дублирует
+function mergeItem(kind,id,data){
+  const L={student:'students',teacher:'teachers',lesson:'lessons',hw:'hw',exam:'exams'}[kind];
+  if(L){
+    const idx=db[L].findIndex(x=>x.id===id);
+    if(idx>=0) db[L][idx]=data; // обновляем существующую
+    else db[L].push(data); // добавляем новую
+  } else if(kind==='att'){
+    const[k,s]=id.split(':').slice(1);
+    (db.att[k]=db.att[k]||{})[s]=data.v;
+  } else if(kind==='note'){
+    db.notes[id]=data.t;
+  } else if(kind==='cfg'&&data.ref){
+    db.ref=data.ref;
+  }
+}
+
+// Удаляет запись по ID
+function removeItem(kind,id){
+  const L={student:'students',teacher:'teachers',lesson:'lessons',hw:'hw',exam:'exams'}[kind];
+  if(L){
+    db[L]=db[L].filter(x=>x.id!==id);
+  } else if(kind==='att'){
+    const[k,s]=id.split(':').slice(1);
+    if(db.att[k]){delete db.att[k][s];if(!Object.keys(db.att[k]).length)delete db.att[k]}
+  } else if(kind==='note'){
+    delete db.notes[id];
   }
 }
 
@@ -341,18 +364,28 @@ async function sync(){
   try{
     const t=await token();
     const cur=rowsOf(),m={},up=[];
+    
+    // 1. Находим локальные изменения и отправляем на сервер
     for(const id in cur){
       const j=JSON.stringify(cur[id]);
       m[id]=j;
       if(syn.m[id]!==j)up.push({id,kind:id.split(':')[0],data:cur[id],deleted:false})
     }
+    // 2. Находим удалённые локально
     for(const id in syn.m){
       if(!(id in cur))up.push({id,kind:id.split(':')[0],data:null,deleted:true})
     }
+    // 3. Отправляем изменения
     if(up.length){
-      const r=await fetch(SB.url+'/rest/v1/items?on_conflict=id',{method:'POST',headers:{...H(t),Prefer:'resolution=merge-duplicates'},body:JSON.stringify(up)});
+      const r=await fetch(SB.url+'/rest/v1/items?on_conflict=id',{
+        method:'POST',
+        headers:{...H(t),Prefer:'resolution=merge-duplicates'},
+        body:JSON.stringify(up)
+      });
       if(!r.ok)throw new Error(await r.text())
     }
+    
+    // 4. Загружаем изменения с сервера
     const since=syn.last?`&updated_at=gt.${encodeURIComponent(syn.last)}`:'';
     let rows=[],o=0;
     for(;;){
@@ -363,18 +396,26 @@ async function sync(){
       if(p.length<1000)break;
       o+=1000
     }
+    
+    // 5. Применяем изменения через merge (без дублей!)
     if(rows.length){
-      applyServerData(rows);
+      rows.forEach(x=>{
+        if(x.deleted) removeItem(x.kind,x.id);
+        else mergeItem(x.kind,x.id,x.data);
+      });
+      save(); // сохраняем в localStorage
+      
+      // Обновляем хэш синхронизации
       const now=rowsOf();
       rows.forEach(x=>{
         if(x.id in now)syn.m[x.id]=JSON.stringify(now[x.id]);
         else delete syn.m[x.id]
       });
       syn.last=rows[rows.length-1].updated_at;
-      localStorage.setItem(KEY,JSON.stringify(db))
+      localStorage.setItem('starosta.syn',JSON.stringify(syn));
     }
+    
     syn.m=m;
-    localStorage.setItem('starosta.syn',JSON.stringify(syn));
     stat='обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
     if(rows.length&&!$('#sheet').classList.contains('on'))render()
   }catch(e){
@@ -395,14 +436,15 @@ const rows=()=>[['ФИО',...cols.map(k=>COLS.find(c=>c[0]===k)[1])],...db.stude
 const csv=()=>rows().map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
 const expCard=()=>`<h2 class="section-title">#Выгрузка <span class="count">CSV</span></h2><div class="card"><small class="mut" style="display:block;margin-bottom:8px">ФИО будет всегда. Отметь остальные столбцы:</small><div id="cols">${COLS.map(([k,n])=>`<label class="ck"><input type="checkbox" value="${k}" ${cols.includes(k)?'checked':''}>${n}</label>`).join('')}</div><div class="acts"><button class="pr" data-a="exp">Скачать CSV</button><button class="ghost" data-a="expc">Копировать</button></div></div>`;
 
+// ===== SEED — только если нет данных =====
 if(!db.seeded){
- if(!db.lessons.length&&!db.teachers.length){
-  const T=[['Иванова М.В.','асс. · Цифровые платформы'],['Бельмас С.М.','ст. пр. · Бизнес-архитектуры, ФЯП, Big Data'],['Ахметова М.И.','доц. · Финансовое моделирование'],['Широков А.А.','доц. · ОС, сети и телекоммуникации'],['Леонтьева С.М.','ст. пр. · Бухгалтерский и управленческий учёт']].map(([name,subj],i)=>({id:'t'+i,name,subj,phone:'',tg:'',mail:''}));
-  const BA='Проектирование бизнес-архитектур',FM='Финансовое моделирование',OS='ОС, сети и телекоммуникации',BU='Бухгалтерский и управленческий учёт',BD='Big Data',FP='Функциональные языки',DP='Цифровые платформы';
-  db.teachers=T;
-  db.lessons=[[0,'13:20','14:50',DP+' (пр)','516 гл.к.А',0],[0,'15:00','16:30',DP+' (лек)','502 гл.к.А',0],[0,'16:40','18:10',DP+' (пр)','516 гл.к.А',0],[1,'11:30','13:00',BA+' (лек)','509 гл.к.А',1],[1,'13:20','14:50',BA+' (пр)','509 гл.к.А',1],[1,'16:40','18:10',FP+' (лек)','дистант',1],[1,'18:20','19:50',FP+' (пр)','дистант',1],[3,'10:10','11:40','Физкультура (пр)','Спортзал ФОК',-1],[3,'15:00','16:30',BD+' (лек)','дистант',1],[3,'16:40','18:10',BD+' (пр)','дистант',1],[4,'13:20','14:50',FM+' (лек)','502 гл.к.А',2],[4,'15:00','16:30',FM+' (пр)','107 гл.к.А',2],[4,'16:40','18:10',FM+' (пр)','107 гл.к.А',2],[5,'09:40','11:10',OS+' (пр)','516 гл.к.А',3],[5,'11:30','13:00',OS+' (лек)','503 гл.к.А',3],[5,'13:20','14:50',BU+' (лек)','506 гл.к.А',4],[5,'15:00','16:30',BU+' (пр)','506 гл.к.А',4]].map(([day,start,end,subj,room,t],i)=>({id:'l'+i,day,start,end,subj,room,teacher:t<0?'':T[t].id,wk:0}));
- }
- db.seeded=1;save();
+  if(!db.lessons.length&&!db.teachers.length){
+    const T=[['Иванова М.В.','асс. · Цифровые платформы'],['Бельмас С.М.','ст. пр. · Бизнес-архитектуры, ФЯП, Big Data'],['Ахметова М.И.','доц. · Финансовое моделирование'],['Широков А.А.','доц. · ОС, сети и телекоммуникации'],['Леонтьева С.М.','ст. пр. · Бухгалтерский и управленческий учёт']].map(([name,subj],i)=>({id:'t'+i,name,subj,phone:'',tg:'',mail:''}));
+    const BA='Проектирование бизнес-архитектур',FM='Финансовое моделирование',OS='ОС, сети и телекоммуникации',BU='Бухгалтерский и управленческий учёт',BD='Big Data',FP='Функциональные языки',DP='Цифровые платформы';
+    db.teachers=T;
+    db.lessons=[[0,'13:20','14:50',DP+' (пр)','516 гл.к.А',0],[0,'15:00','16:30',DP+' (лек)','502 гл.к.А',0],[0,'16:40','18:10',DP+' (пр)','516 гл.к.А',0],[1,'11:30','13:00',BA+' (лек)','509 гл.к.А',1],[1,'13:20','14:50',BA+' (пр)','509 гл.к.А',1],[1,'16:40','18:10',FP+' (лек)','дистант',1],[1,'18:20','19:50',FP+' (пр)','дистант',1],[3,'10:10','11:40','Физкультура (пр)','Спортзал ФОК',-1],[3,'15:00','16:30',BD+' (лек)','дистант',1],[3,'16:40','18:10',BD+' (пр)','дистант',1],[4,'13:20','14:50',FM+' (лек)','502 гл.к.А',2],[4,'15:00','16:30',FM+' (пр)','107 гл.к.А',2],[4,'16:40','18:10',FM+' (пр)','107 гл.к.А',2],[5,'09:40','11:10',OS+' (пр)','516 гл.к.А',3],[5,'11:30','13:00',OS+' (лек)','503 гл.к.А',3],[5,'13:20','14:50',BU+' (лек)','506 гл.к.А',4],[5,'15:00','16:30',BU+' (пр)','506 гл.к.А',4]].map(([day,start,end,subj,room,t],i)=>({id:'l'+i,day,start,end,subj,room,teacher:t<0?'':T[t].id,wk:0}));
+  }
+  db.seeded=1;save();
 }
 
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1800)}
@@ -441,7 +483,7 @@ function vToday(){
    h+='<h2 class="section-title">#Напоминания <span class="count">'+reminders.length+'</span></h2>';
    reminders.slice(0,5).forEach(r=>{
      const cls=r.type==='bday'?'bday':r.urgent?'urgent':'';
-     let icon=r.type==='hw'?'📝':r.type==='bday'?'🎂':'';
+     let icon=r.type==='hw'?'':r.type==='bday'?'':'🎓';
      let when=r.daysLeft===0?'СЕГОДНЯ':r.daysLeft===1?'ЗАВТРА':'ЧЕРЕЗ '+r.daysLeft+' ДН.';
      h+=`<div class="reminder ${cls}"><div class="rt">${icon} ${esc(r.text)}</div><div class="rd">${when}${r.time?' · '+r.time:''}</div></div>`;
    });
@@ -473,7 +515,7 @@ function vTasks(){
    h+='<h2 class="section-title" style="margin-top:28px">#Сессия <button class="pr" data-a="exam" data-i="">+ Экзамен</button></h2>';
    upcoming.forEach(x=>{
      const daysLeft=Math.ceil((pd(x.date)-new Date())/864e5);
-     let countdown=daysLeft===0?'🔥 СЕГОДНЯ':daysLeft===1?' ЗАВТРА':'Осталось '+daysLeft+' дн.';
+     let countdown=daysLeft===0?' СЕГОДНЯ':daysLeft===1?'⏰ ЗАВТРА':'Осталось '+daysLeft+' дн.';
      h+=`<div class="exam-card" data-a="exam" data-i="${x.id}"><div class="edate">${x.date.slice(8)}.${x.date.slice(5,7)}${x.time?' · '+x.time:''}</div><div class="esubj">${esc(x.subj)}</div><div class="emut">${esc(x.type)}${x.teacher?' · '+tname(x.teacher):''}${x.room?' · '+esc(x.room):''}</div><div class="countdown">${countdown}</div></div>`;
    });
  }
@@ -549,11 +591,7 @@ const A={
    try{
      await login(val('sbe'),val('sbp'));
      toast('Вход выполнен');
-     db={students:[],teachers:[],lessons:[],att:{},notes:{},hw:[],exams:[],ref:'2026-08-31'};
-     syn={m:{},last:''};
-     localStorage.removeItem(KEY);
-     localStorage.removeItem('starosta.syn');
-     await new Promise(r=>setTimeout(r,300));
+     // НЕ стираем локальные данные! Просто запускаем синхронизацию
      await sync();
      render();
    }catch(e){toast(e.message)}

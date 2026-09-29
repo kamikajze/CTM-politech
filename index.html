@@ -154,13 +154,6 @@ body.dark .bar-fill{background:#f5f5f3}
 .percent-big{font:900 64px/1 ui-serif,Georgia,serif;text-align:center;margin:12px 0 6px;letter-spacing:-0.04em;color:#0a0a0a}
 body.dark .percent-big{color:#f5f5f3}
 
-.stat-row{display:flex;justify-content:space-between;font-size:11px;padding:6px 0;border-bottom:1px dashed #0a0a0a;text-transform:uppercase;letter-spacing:0.05em;color:#0a0a0a}
-body.dark .stat-row{border-color:#f5f5f3;color:#f5f5f3}
-.stat-row:last-child{border-bottom:0}
-.stat-row .lbl{color:#6b6b6b;font-weight:600}
-body.dark .stat-row .lbl{color:#8a8a8a}
-.stat-row .val{font-weight:800;font-variant-numeric:tabular-nums}
-
 .reminder{border:2px solid #0a0a0a;border-left:5px solid #ff8c00;padding:10px 12px;margin:6px 0;background:#fff;color:#0a0a0a}
 body.dark .reminder{border-color:#f5f5f3;background:#141414;color:#f5f5f3}
 .reminder.urgent{border-left-color:#ff2d2d;background:#ff2d2d;color:#fff}
@@ -311,21 +304,14 @@ async function token(){if(!ses)throw new Error('нужен вход');if(Date.no
 
 function rowsOf(){const r={};db.students.forEach(x=>r['student:'+x.id]=x);db.teachers.forEach(x=>r['teacher:'+x.id]=x);db.lessons.forEach(x=>r['lesson:'+x.id]=x);db.hw.forEach(x=>r['hw:'+x.id]=x);db.exams.forEach(x=>r['exam:'+x.id]=x);for(const k in db.att)for(const s in db.att[k])r['att:'+k+':'+s]={k,s,v:db.att[k][s]};for(const k in db.notes)r['note:'+k]={k,t:db.notes[k]};r['cfg:ref']={ref:db.ref};return r}
 
-// НОВАЯ ФУНКЦИЯ: применяет серверные данные БЕЗ создания дублей
-// Сначала группирует по id (берёт последнюю версию), потом ПОЛНОСТЬЮ заменяет локальные данные
 function applyServerData(rows){
-  // 1. Группируем по id, оставляем только последнюю версию каждой записи
   const byId={};
   rows.forEach(x=>{
     if(!byId[x.id]||new Date(x.updated_at)>new Date(byId[x.id].updated_at)){
       byId[x.id]=x;
     }
   });
-  
-  // 2. Полностью очищаем локальные данные
   db={students:[],teachers:[],lessons:[],att:{},notes:{},hw:[],exams:[],ref:db.ref};
-  
-  // 3. Заполняем из серверных данных
   for(const id in byId){
     const x=byId[id];
     if(x.deleted)continue;
@@ -377,8 +363,6 @@ async function sync(){
       if(p.length<1000)break;
       o+=1000
     }
-    
-    // ИСПРАВЛЕНИЕ: используем applyServerData вместо поштучного applyRow
     if(rows.length){
       applyServerData(rows);
       const now=rowsOf();
@@ -457,7 +441,7 @@ function vToday(){
    h+='<h2 class="section-title">#Напоминания <span class="count">'+reminders.length+'</span></h2>';
    reminders.slice(0,5).forEach(r=>{
      const cls=r.type==='bday'?'bday':r.urgent?'urgent':'';
-     let icon=r.type==='hw'?'📝':r.type==='bday'?'🎂':'🎓';
+     let icon=r.type==='hw'?'📝':r.type==='bday'?'🎂':'';
      let when=r.daysLeft===0?'СЕГОДНЯ':r.daysLeft===1?'ЗАВТРА':'ЧЕРЕЗ '+r.daysLeft+' ДН.';
      h+=`<div class="reminder ${cls}"><div class="rt">${icon} ${esc(r.text)}</div><div class="rd">${when}${r.time?' · '+r.time:''}</div></div>`;
    });
@@ -489,7 +473,7 @@ function vTasks(){
    h+='<h2 class="section-title" style="margin-top:28px">#Сессия <button class="pr" data-a="exam" data-i="">+ Экзамен</button></h2>';
    upcoming.forEach(x=>{
      const daysLeft=Math.ceil((pd(x.date)-new Date())/864e5);
-     let countdown=daysLeft===0?'🔥 СЕГОДНЯ':daysLeft===1?'⏰ ЗАВТРА':'Осталось '+daysLeft+' дн.';
+     let countdown=daysLeft===0?'🔥 СЕГОДНЯ':daysLeft===1?' ЗАВТРА':'Осталось '+daysLeft+' дн.';
      h+=`<div class="exam-card" data-a="exam" data-i="${x.id}"><div class="edate">${x.date.slice(8)}.${x.date.slice(5,7)}${x.time?' · '+x.time:''}</div><div class="esubj">${esc(x.subj)}</div><div class="emut">${esc(x.type)}${x.teacher?' · '+tname(x.teacher):''}${x.room?' · '+esc(x.room):''}</div><div class="countdown">${countdown}</div></div>`;
    });
  }
@@ -565,7 +549,6 @@ const A={
    try{
      await login(val('sbe'),val('sbp'));
      toast('Вход выполнен');
-     // Полная очистка перед загрузкой с сервера
      db={students:[],teachers:[],lessons:[],att:{},notes:{},hw:[],exams:[],ref:'2026-08-31'};
      syn={m:{},last:''};
      localStorage.removeItem(KEY);

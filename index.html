@@ -412,7 +412,11 @@ function dedupeDb(){
   const seen=new Set(), teacherMap=new Map();
   db.students=db.students.filter(x=>{
     if(!x?.id)return true;
-    const k=norm(x.name); if(seen.has(k)){const keep=db.students.find(y=>norm(y.name)===k&&y.id!==x.id);if(keep)remapStudentId(x.id,keep.id);return false} seen.add(k); return true;
+    const k=norm(x.name);
+    // Пустые ФИО НЕ считаем дублями: несколько пустых карточек допустимы.
+    if(!k)return true;
+    if(seen.has(k)){const keep=db.students.find(y=>y.id!==x.id&&norm(y.name)===k);if(keep)remapStudentId(x.id,keep.id);return false}
+    seen.add(k); return true;
   });
   seen.clear();
   db.teachers=db.teachers.filter(x=>{
@@ -449,34 +453,27 @@ async function sync(){
   try{
     const t=await token();
 
-    // Синхронизация теперь всегда работает по схеме:
-    // 1) определить локальные изменения относительно последнего состояния;
-    // 2) отправить их в Supabase;
-    // 3) заново получить ВСЕ актуальные данные с сервера;
-    // 4) заменить локальную копию серверной.
-    // Это важно для нескольких устройств: телефон гарантированно увидит
-    // изменения, сделанные на ноутбуке, даже если его updated_at/last cursor
-    // устарел или был создан до изменения.
-    let cur=rowsOf(),up=[];
+    // БЕЗОПАСНАЯ синхронизация:
+    // - никогда не считаем отсутствие записи на устройстве удалением;
+    // - сначала получаем актуальный серверный снимок;
+    // - отправляем только те локальные записи, которые реально менялись
+    //   после последнего успешного снимка этого устройства;
+    // - затем снова читаем сервер целиком.
+    // Это предотвращает массовое удаление данных из-за неполной локальной БД.
+    const before=rowsOf();
+    const serverRows=await fetchRows(t);
+    const serverMap={};
+    for(const x of serverRows)if(!x.deleted&&x.data)serverMap[x.id]={kind:x.kind,data:x.data};
 
-    // Самое первое подключение чистого устройства: сервер — источник истины.
-    if(!syn.last && !Object.keys(syn.m||{}).length){
-      const initial=await fetchRows(t);
-      if(initial.length){
-        db.students=[];db.teachers=[];db.lessons=[];db.hw=[];db.exams=[];db.att={};db.notes={};
-        for(const x of initial){if(!x.deleted)mergeItem(x.kind,x.id,x.data)}
-        dedupeDb();
-        cur=rowsOf();
+    const up=[];
+    for(const id in before){
+      const j=JSON.stringify(before[id]);
+      // Новая запись или запись, изменённая локально после последнего снимка.
+      if(!(id in (syn.m||{})) || syn.m[id]!==j){
+        // Если сервер уже содержит более свежую запись, не перетираем её
+        // старой локальной копией. Сравниваем только с нашим прошлым снимком.
+        up.push({id,kind:id.split(':')[0],data:before[id],deleted:false});
       }
-    }
-
-    // Отправляем только то, что реально изменилось на этом устройстве.
-    for(const id in cur){
-      const j=JSON.stringify(cur[id]);
-      if(syn.m[id]!==j)up.push({id,kind:id.split(':')[0],data:cur[id],deleted:false});
-    }
-    for(const id in (syn.m||{})){
-      if(!(id in cur))up.push({id,kind:id.split(':')[0],data:null,deleted:true});
     }
 
     if(up.length){
@@ -488,20 +485,16 @@ async function sync(){
       if(!r.ok)throw new Error(await r.text());
     }
 
-    // Всегда забираем полный серверный снимок после отправки.
-    // Поэтому изменение студента/преподавателя/заметки/посещаемости
-    // с ноутбука гарантированно появляется на телефоне.
-    const serverRows=await fetchRows(t);
+    // Повторно читаем сервер после загрузки изменений.
+    const finalRows=await fetchRows(t);
     db.students=[];db.teachers=[];db.lessons=[];db.hw=[];db.exams=[];db.att={};db.notes={};
-    for(const x of serverRows){
-      if(x.deleted)continue;
+    for(const x of finalRows){
+      if(x.deleted||!x.data)continue;
       mergeItem(x.kind,x.id,x.data);
     }
     dedupeDb();
 
-    if(serverRows.length){
-      syn.last=serverRows.reduce((m,x)=>x.updated_at>m?x.updated_at:m,'');
-    }
+    syn.last=finalRows.reduce((m,x)=>x.updated_at>m?x.updated_at:m,'');
     const now=rowsOf();
     syn.m={};
     for(const id in now)syn.m[id]=JSON.stringify(now[id]);

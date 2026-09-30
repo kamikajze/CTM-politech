@@ -226,7 +226,20 @@ let tab='today',cur=new Date(),sh={};cur.setHours(12,0,0,0);
 
 // Сохранение в localStorage
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Не удалось сохранить')}queue()};
-const uid=()=>Math.random().toString(36).slice(2,9);
+const uid=()=>{
+  if(crypto.randomUUID){
+    return crypto.randomUUID();
+  }
+
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+    /[xy]/g,
+    c=>{
+      const r=Math.random()*16|0;
+      const v=c==='x'?r:(r&0x3|0x8);
+      return v.toString(16);
+    }
+  );
+};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const iso=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*6e4);return z.toISOString().slice(0,10)};
 const pd=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d,12)};
@@ -356,73 +369,187 @@ function removeItem(kind,id){
 function queue(){if(SB.url&&ses){clearTimeout(tm);tm=setTimeout(sync,900)}}
 
 async function sync(){
-  if(!SB.url||!ses)return;
-  if(busy){again=true;return}
+  if(!SB.url || !ses) return;
+
+  if(busy){
+    again=true;
+    return;
+  }
+
   busy=true;
   again=false;
-  
+
   try{
     const t=await token();
-    const cur=rowsOf(),m={},up=[];
-    
-    // 1. Находим локальные изменения и отправляем на сервер
+
+    // Текущее локальное состояние
+    const cur=rowsOf();
+    const up=[];
+
+    // 1. Локальные изменения
     for(const id in cur){
       const j=JSON.stringify(cur[id]);
-      m[id]=j;
-      if(syn.m[id]!==j)up.push({id,kind:id.split(':')[0],data:cur[id],deleted:false})
+
+      if(syn.m[id]!==j){
+        up.push({
+          id,
+          kind:id.split(':')[0],
+          data:cur[id],
+          deleted:false
+        });
+      }
     }
-    // 2. Находим удалённые локально
+
+    // 2. Локальные удаления
     for(const id in syn.m){
-      if(!(id in cur))up.push({id,kind:id.split(':')[0],data:null,deleted:true})
+      if(!(id in cur)){
+        up.push({
+          id,
+          kind:id.split(':')[0],
+          data:null,
+          deleted:true
+        });
+      }
     }
+
     // 3. Отправляем изменения
     if(up.length){
-      const r=await fetch(SB.url+'/rest/v1/items?on_conflict=id',{
-        method:'POST',
-        headers:{...H(t),Prefer:'resolution=merge-duplicates'},
-        body:JSON.stringify(up)
-      });
-      if(!r.ok)throw new Error(await r.text())
+      const r=await fetch(
+        SB.url+'/rest/v1/items?on_conflict=id',
+        {
+          method:'POST',
+          headers:{
+            ...H(t),
+            Prefer:'resolution=merge-duplicates'
+          },
+          body:JSON.stringify(up)
+        }
+      );
+
+      if(!r.ok){
+        throw new Error(await r.text());
+      }
     }
-    
-    // 4. Загружаем изменения с сервера
-    const since=syn.last?`&updated_at=gt.${encodeURIComponent(syn.last)}`:'';
-    let rows=[],o=0;
+
+    // 4. Забираем серверные изменения
+    const since=syn.last
+      ? `&updated_at=gt.${encodeURIComponent(syn.last)}`
+      : '';
+
+    let rows=[];
+    let o=0;
+
     for(;;){
-      const r=await fetch(SB.url+`/rest/v1/items?select=*&order=updated_at.asc,id.asc${since}&limit=1000&offset=${o}`,{headers:H(t)});
-      if(!r.ok)throw new Error(await r.text());
+      const r=await fetch(
+        SB.url+
+        `/rest/v1/items?select=*&order=updated_at.asc,id.asc${since}&limit=1000&offset=${o}`,
+        {
+          headers:H(t)
+        }
+      );
+
+      if(!r.ok){
+        throw new Error(await r.text());
+      }
+
       const p=await r.json();
+
       rows=rows.concat(p);
-      if(p.length<1000)break;
-      o+=1000
+
+      if(p.length<1000) break;
+
+      o+=1000;
     }
-    
-    // 5. Применяем изменения через merge (без дублей!)
+
+    // 5. Применяем серверные изменения
     if(rows.length){
       rows.forEach(x=>{
-        if(x.deleted) removeItem(x.kind,x.id);
-        else mergeItem(x.kind,x.id,x.data);
+        if(x.deleted){
+          removeItem(x.kind,x.id);
+        }else{
+          mergeItem(x.kind,x.id,x.data);
+        }
       });
-      save(); // сохраняем в localStorage
-      
-      // Обновляем хэш синхронизации
+
+      /*
+       * НЕ вызываем save() здесь.
+       * save() запускает queue() и создаёт дополнительный sync().
+       */
+      try{
+        localStorage.setItem(
+          KEY,
+          JSON.stringify(db)
+        );
+      }catch(e){
+        throw new Error('Не удалось сохранить данные');
+      }
+
+      /*
+       * Очень важно:
+       * строим syn.m ПОСЛЕ merge.
+       */
       const now=rowsOf();
-      rows.forEach(x=>{
-        if(x.id in now)syn.m[x.id]=JSON.stringify(now[x.id]);
-        else delete syn.m[x.id]
-      });
+
+      syn.m={};
+
+      for(const id in now){
+        syn.m[id]=JSON.stringify(now[id]);
+      }
+
       syn.last=rows[rows.length-1].updated_at;
-      localStorage.setItem('starosta.syn',JSON.stringify(syn));
+
+      localStorage.setItem(
+        'starosta.syn',
+        JSON.stringify(syn)
+      );
+    }else{
+      /*
+       * Сервер ничего нового не прислал.
+       * Значит отправленные локальные изменения
+       * считаем синхронизированными.
+       */
+      const now=rowsOf();
+
+      syn.m={};
+
+      for(const id in now){
+        syn.m[id]=JSON.stringify(now[id]);
+      }
+
+      localStorage.setItem(
+        'starosta.syn',
+        JSON.stringify(syn)
+      );
     }
-    
-    syn.m=m;
-    stat='обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-    if(rows.length&&!$('#sheet').classList.contains('on'))render()
+
+    stat=
+      'обновлено '+
+      new Date().toLocaleTimeString(
+        'ru-RU',
+        {
+          hour:'2-digit',
+          minute:'2-digit'
+        }
+      );
+
+    if(
+      rows.length &&
+      !$('#sheet').classList.contains('on')
+    ){
+      render();
+    }
+
   }catch(e){
-    stat='ошибка: '+String(e.message).slice(0,90)
+    stat=
+      'ошибка: '+
+      String(e.message).slice(0,90);
   }finally{
     busy=false;
-    if(again){again=false;sync()}
+
+    if(again){
+      again=false;
+      sync();
+    }
   }
 }
 

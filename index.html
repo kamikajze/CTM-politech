@@ -448,46 +448,64 @@ async function sync(){
   busy=true; again=false;
   try{
     const t=await token();
-    let rows=[];
 
-    // Первый sync после очистки/нового устройства: если сервер уже содержит
-    // данные, он становится источником истины. Это не даёт старой локальной
-    // копии повторно залить в Supabase сотни записей с новыми ID.
-    if(!syn.last){
-      rows=await fetchRows(t);
-      if(rows.length){
+    // Синхронизация теперь всегда работает по схеме:
+    // 1) определить локальные изменения относительно последнего состояния;
+    // 2) отправить их в Supabase;
+    // 3) заново получить ВСЕ актуальные данные с сервера;
+    // 4) заменить локальную копию серверной.
+    // Это важно для нескольких устройств: телефон гарантированно увидит
+    // изменения, сделанные на ноутбуке, даже если его updated_at/last cursor
+    // устарел или был создан до изменения.
+    let cur=rowsOf(),up=[];
+
+    // Самое первое подключение чистого устройства: сервер — источник истины.
+    if(!syn.last && !Object.keys(syn.m||{}).length){
+      const initial=await fetchRows(t);
+      if(initial.length){
         db.students=[];db.teachers=[];db.lessons=[];db.hw=[];db.exams=[];db.att={};db.notes={};
-        for(const x of rows){if(x.deleted)continue;mergeItem(x.kind,x.id,x.data)}
+        for(const x of initial){if(!x.deleted)mergeItem(x.kind,x.id,x.data)}
         dedupeDb();
+        cur=rowsOf();
       }
-    }else{
-      rows=await fetchRows(t,syn.last);
     }
 
-    const cur=rowsOf(),up=[];
-    // На обычном sync отправляем только реальные локальные изменения.
-    // После первичного server-authoritative sync syn.m уже будет заполнен.
+    // Отправляем только то, что реально изменилось на этом устройстве.
     for(const id in cur){
       const j=JSON.stringify(cur[id]);
       if(syn.m[id]!==j)up.push({id,kind:id.split(':')[0],data:cur[id],deleted:false});
     }
-    for(const id in syn.m)if(!(id in cur))up.push({id,kind:id.split(':')[0],data:null,deleted:true});
+    for(const id in (syn.m||{})){
+      if(!(id in cur))up.push({id,kind:id.split(':')[0],data:null,deleted:true});
+    }
 
     if(up.length){
-      const r=await fetch(SB.url+'/rest/v1/items?on_conflict=id',{method:'POST',headers:{...H(t),Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(up)});
+      const r=await fetch(SB.url+'/rest/v1/items?on_conflict=id',{
+        method:'POST',
+        headers:{...H(t),Prefer:'resolution=merge-duplicates,return=minimal'},
+        body:JSON.stringify(up)
+      });
       if(!r.ok)throw new Error(await r.text());
-      // Получаем записи, которые только что подтвердил сервер.
-      const changed=await fetchRows(t,syn.last||'');
-      rows=rows.concat(changed.filter(x=>!rows.some(y=>y.id===x.id&&y.updated_at===x.updated_at)));
     }
 
-    for(const x of rows){
-      if(x.deleted)removeItem(x.kind,x.id); else mergeItem(x.kind,x.id,x.data);
+    // Всегда забираем полный серверный снимок после отправки.
+    // Поэтому изменение студента/преподавателя/заметки/посещаемости
+    // с ноутбука гарантированно появляется на телефоне.
+    const serverRows=await fetchRows(t);
+    db.students=[];db.teachers=[];db.lessons=[];db.hw=[];db.exams=[];db.att={};db.notes={};
+    for(const x of serverRows){
+      if(x.deleted)continue;
+      mergeItem(x.kind,x.id,x.data);
     }
     dedupeDb();
-    if(rows.length)syn.last=rows[rows.length-1].updated_at;
 
-    const now=rowsOf(); syn.m={}; for(const id in now)syn.m[id]=JSON.stringify(now[id]);
+    if(serverRows.length){
+      syn.last=serverRows.reduce((m,x)=>x.updated_at>m?x.updated_at:m,'');
+    }
+    const now=rowsOf();
+    syn.m={};
+    for(const id in now)syn.m[id]=JSON.stringify(now[id]);
+
     localStorage.setItem(KEY,JSON.stringify(db));
     localStorage.setItem('starosta.syn',JSON.stringify(syn));
     stat='обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
@@ -495,7 +513,6 @@ async function sync(){
   }catch(e){stat='ошибка: '+String(e.message).slice(0,90)}
   finally{busy=false;if(again){again=false;sync()}}
 }
-
 
 
 const syncCard=()=>`<h2 class="section-title">#Синхронизация</h2><div class="card">${ses?`<small class="mut">Вход выполнен · ${esc(stat)}</small><div class="acts"><button class="pr" data-a="syncnow">Обновить</button><button class="ghost" data-a="sblogout">Выйти</button></div>`:`<div class="card-quote">Войди чтобы синхронизировать данные между устройствами через облако.</div><label>Email</label><input id="sbe" type="email" autocomplete="username"><label>Пароль</label><input id="sbp" type="password" autocomplete="current-password"><button class="pr" data-a="sblogin" style="width:100%">Войти</button>`}</div>`;

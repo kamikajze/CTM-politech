@@ -328,24 +328,67 @@ function rowsOf(){
 
 // КЛЮЧЕВАЯ ФУНКЦИЯ: merge по ID без дублей
 // Обновляет существующую запись или добавляет новую, но никогда не дублирует
+function norm(s){return String(s??'').trim().toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ')}
+function lessonKey(x){
+  return [x?.wk||0,x?.day??'',x?.start??'',x?.end??'',norm(x?.room),norm(x?.subj)].join('|');
+}
+function remapStudentId(oldId,newId){
+  if(oldId===newId)return;
+  for(const k in db.att){
+    if(db.att[k]&&Object.prototype.hasOwnProperty.call(db.att[k],oldId)){
+      if(!Object.prototype.hasOwnProperty.call(db.att[k],newId))db.att[k][newId]=db.att[k][oldId];
+      delete db.att[k][oldId];
+    }
+  }
+}
+function canonicalTeacherId(id){
+  const t=db.teachers.find(x=>x.id===id);
+  return t?t.id:id;
+}
+
+// Мержим не только по ID. Если два устройства создали одного и того же
+// человека/пару с разными случайными ID, считаем их одной сущностью.
 function mergeItem(kind,id,data){
   const L={student:'students',teacher:'teachers',lesson:'lessons',hw:'hw',exam:'exams'}[kind];
   if(L){
-    // В Supabase id имеет префикс (student:abc), а внутри data.id — abc.
-    // Сравниваем с data.id, иначе каждый sync добавляет новую копию.
-    const idx=db[L].findIndex(x=>x.id===data?.id);
+    if(!data)return;
+    let idx=db[L].findIndex(x=>x.id===data.id);
+    if(kind==='student'){
+      const same=db.students.findIndex(x=>norm(x.name)===norm(data.name));
+      if(same>=0 && db.students[same].id!==data.id){
+        const old=db.students[same].id;
+        db.students[same]=Object.assign({},db.students[same],data,{id:old});
+        remapStudentId(data.id,old);
+        return;
+      }
+    }
+    if(kind==='teacher'){
+      const same=db.teachers.findIndex(x=>norm(x.name)===norm(data.name));
+      if(same>=0 && db.teachers[same].id!==data.id){
+        const old=db.teachers[same].id;
+        db.teachers[same]=Object.assign({},db.teachers[same],data,{id:old});
+        return;
+      }
+    }
+    if(kind==='lesson'){
+      const same=db.lessons.findIndex(x=>lessonKey(x)===lessonKey(data));
+      if(same>=0 && db.lessons[same].id!==data.id){
+        const old=db.lessons[same].id;
+        const teacher=canonicalTeacherId(data.teacher||'');
+        db.lessons[same]=Object.assign({},db.lessons[same],data,{id:old,teacher});
+        return;
+      }
+      data=Object.assign({},data,{teacher:canonicalTeacherId(data.teacher||'')});
+      idx=db.lessons.findIndex(x=>x.id===data.id);
+    }
     if(idx>=0)db[L][idx]=data;
     else db[L].push(data);
   }else if(kind==='att'){
-    const parts=id.split(':').slice(1);
-    const k=parts[0],s=parts[1];
-    if(k&&s)(db.att[k]=db.att[k]||{})[s]=data.v;
+    const parts=id.split(':').slice(1),k=parts[0],st=parts[1];
+    if(k&&st)(db.att[k]=db.att[k]||{})[st]=data.v;
   }else if(kind==='note'){
-    const k=data?.k??id.slice('note:'.length);
-    db.notes[k]=data?.t??'';
-  }else if(kind==='cfg'&&data?.ref){
-    db.ref=data.ref;
-  }
+    const k=data?.k??id.slice('note:'.length); db.notes[k]=data?.t??'';
+  }else if(kind==='cfg'&&data?.ref)db.ref=data.ref;
 }
 
 function removeItem(kind,id){
@@ -366,106 +409,93 @@ function removeItem(kind,id){
 }
 
 function dedupeDb(){
-  for(const L of ['students','teachers','lessons','hw','exams']){
-    const seen=new Set();
-    db[L]=db[L].filter(x=>{
-      if(!x?.id)return true;
-      if(seen.has(x.id))return false;
-      seen.add(x.id);
-      return true;
-    });
+  const seen=new Set(), teacherMap=new Map();
+  db.students=db.students.filter(x=>{
+    if(!x?.id)return true;
+    const k=norm(x.name); if(seen.has(k)){const keep=db.students.find(y=>norm(y.name)===k&&y.id!==x.id);if(keep)remapStudentId(x.id,keep.id);return false} seen.add(k); return true;
+  });
+  seen.clear();
+  db.teachers=db.teachers.filter(x=>{
+    if(!x?.id)return true;
+    const k=norm(x.name); if(seen.has(k)){const keep=db.teachers.find(y=>norm(y.name)===k&&y.id!==x.id);if(keep)teacherMap.set(x.id,keep.id);return false} seen.add(k); return true;
+  });
+  db.lessons=db.lessons.map(x=>Object.assign({},x,{teacher:teacherMap.get(x.teacher)||x.teacher}));
+  seen.clear();
+  db.lessons=db.lessons.filter(x=>{const k=lessonKey(x);if(seen.has(k))return false;seen.add(k);return true});
+  for(const L of ['hw','exams']){
+    seen.clear();db[L]=db[L].filter(x=>{if(!x?.id)return true;if(seen.has(x.id))return false;seen.add(x.id);return true});
   }
 }
 
 
 function queue(){if(SB.url&&ses){clearTimeout(tm);tm=setTimeout(sync,900)}}
 
+async function fetchRows(t,since=''){
+  const q=since?`&updated_at=gt.${encodeURIComponent(since)}`:'';
+  let rows=[],o=0;
+  for(;;){
+    const r=await fetch(SB.url+`/rest/v1/items?select=*&order=updated_at.asc,id.asc${q}&limit=1000&offset=${o}`,{headers:H(t)});
+    if(!r.ok)throw new Error(await r.text());
+    const p=await r.json(); rows=rows.concat(p);
+    if(p.length<1000)break; o+=1000;
+  }
+  return rows;
+}
+
 async function sync(){
   if(!SB.url||!ses)return;
   if(busy){again=true;return}
-  busy=true;
-  again=false;
-
+  busy=true; again=false;
   try{
     const t=await token();
-    const cur=rowsOf();
-    const up=[];
+    let rows=[];
 
-    // Локальные изменения. syn.m содержит именно последнее
-    // подтверждённое состояние, поэтому сравниваем с ним.
+    // Первый sync после очистки/нового устройства: если сервер уже содержит
+    // данные, он становится источником истины. Это не даёт старой локальной
+    // копии повторно залить в Supabase сотни записей с новыми ID.
+    if(!syn.last){
+      rows=await fetchRows(t);
+      if(rows.length){
+        db.students=[];db.teachers=[];db.lessons=[];db.hw=[];db.exams=[];db.att={};db.notes={};
+        for(const x of rows){if(x.deleted)continue;mergeItem(x.kind,x.id,x.data)}
+        dedupeDb();
+      }
+    }else{
+      rows=await fetchRows(t,syn.last);
+    }
+
+    const cur=rowsOf(),up=[];
+    // На обычном sync отправляем только реальные локальные изменения.
+    // После первичного server-authoritative sync syn.m уже будет заполнен.
     for(const id in cur){
       const j=JSON.stringify(cur[id]);
-      if(syn.m[id]!==j){
-        up.push({id,kind:id.split(':')[0],data:cur[id],deleted:false});
-      }
+      if(syn.m[id]!==j)up.push({id,kind:id.split(':')[0],data:cur[id],deleted:false});
     }
+    for(const id in syn.m)if(!(id in cur))up.push({id,kind:id.split(':')[0],data:null,deleted:true});
 
-    // Локальные удаления.
-    for(const id in syn.m){
-      if(!(id in cur)){
-        up.push({id,kind:id.split(':')[0],data:null,deleted:true});
-      }
-    }
-
-    // Отправляем изменения. PRIMARY KEY(id) + on_conflict=id
-    // делает запись повторной отправки идемпотентной.
     if(up.length){
-      const r=await fetch(SB.url+'/rest/v1/items?on_conflict=id',{
-        method:'POST',
-        headers:{...H(t),Prefer:'resolution=merge-duplicates,return=minimal'},
-        body:JSON.stringify(up)
-      });
+      const r=await fetch(SB.url+'/rest/v1/items?on_conflict=id',{method:'POST',headers:{...H(t),Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(up)});
       if(!r.ok)throw new Error(await r.text());
+      // Получаем записи, которые только что подтвердил сервер.
+      const changed=await fetchRows(t,syn.last||'');
+      rows=rows.concat(changed.filter(x=>!rows.some(y=>y.id===x.id&&y.updated_at===x.updated_at)));
     }
 
-    // Забираем серверные изменения после последней подтверждённой точки.
-    const since=syn.last?`&updated_at=gt.${encodeURIComponent(syn.last)}`:'';
-    let rows=[],o=0;
-
-    for(;;){
-      const r=await fetch(
-        SB.url+`/rest/v1/items?select=*&order=updated_at.asc,id.asc${since}&limit=1000&offset=${o}`,
-        {headers:H(t)}
-      );
-      if(!r.ok)throw new Error(await r.text());
-      const p=await r.json();
-      rows=rows.concat(p);
-      if(p.length<1000)break;
-      o+=1000;
-    }
-
-    // Применяем серверные изменения. ВАЖНО: не вызываем save(),
-    // потому что save() ставит новый sync через queue().
     for(const x of rows){
-      if(x.deleted)removeItem(x.kind,x.id);
-      else mergeItem(x.kind,x.id,x.data);
+      if(x.deleted)removeItem(x.kind,x.id); else mergeItem(x.kind,x.id,x.data);
     }
+    dedupeDb();
+    if(rows.length)syn.last=rows[rows.length-1].updated_at;
 
-    if(rows.length){
-      syn.last=rows[rows.length-1].updated_at;
-    }
-
-    // После merge сохраняем фактическое состояние.
-    // Это устраняет старый баг с syn.m=m, где в syn.m возвращался
-    // снимок состояния ДО загрузки данных с сервера.
-    const now=rowsOf();
-    syn.m={};
-    for(const id in now){
-      syn.m[id]=JSON.stringify(now[id]);
-    }
-
+    const now=rowsOf(); syn.m={}; for(const id in now)syn.m[id]=JSON.stringify(now[id]);
     localStorage.setItem(KEY,JSON.stringify(db));
     localStorage.setItem('starosta.syn',JSON.stringify(syn));
-
     stat='обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-    if(rows.length&&!$('#sheet').classList.contains('on'))render();
-  }catch(e){
-    stat='ошибка: '+String(e.message).slice(0,90);
-  }finally{
-    busy=false;
-    if(again){again=false;sync()}
-  }
+    render();
+  }catch(e){stat='ошибка: '+String(e.message).slice(0,90)}
+  finally{busy=false;if(again){again=false;sync()}}
 }
+
 
 
 const syncCard=()=>`<h2 class="section-title">#Синхронизация</h2><div class="card">${ses?`<small class="mut">Вход выполнен · ${esc(stat)}</small><div class="acts"><button class="pr" data-a="syncnow">Обновить</button><button class="ghost" data-a="sblogout">Выйти</button></div>`:`<div class="card-quote">Войди чтобы синхронизировать данные между устройствами через облако.</div><label>Email</label><input id="sbe" type="email" autocomplete="username"><label>Пароль</label><input id="sbp" type="password" autocomplete="current-password"><button class="pr" data-a="sblogin" style="width:100%">Войти</button>`}</div>`;
